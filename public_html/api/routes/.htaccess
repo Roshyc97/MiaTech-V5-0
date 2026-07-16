@@ -1,0 +1,2 @@
+# Handlers de ruta: nunca se acceden directo por web (solo se incluyen desde index.php)
+Require all denied

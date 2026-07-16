@@ -1,0 +1,35 @@
+<?php
+use MiaTech\Response;
+use MiaTech\Request;
+use MiaTech\Database;
+use MiaTech\Mailer;
+
+// Recuperacion SOLO para roles (administradores). Estudiantes NO tienen recuperacion.
+$correo = strtolower(trim((string) Request::input('correo', '')));
+if ($correo === '') {
+    Response::error('Correo requerido', 400);
+}
+$generico = ['mensaje' => 'Si el correo corresponde a un usuario con rol, se enviaron instrucciones.'];
+
+$admin = Database::get('SELECT id, correo, nombre FROM administradores WHERE correo = ? AND activo = 1', [$correo]);
+if (!$admin) {
+    Response::ok($generico); // no revelar existencia
+}
+$token  = bin2hex(random_bytes(32));
+$hash   = hash('sha256', $token);
+$expira = date('Y-m-d H:i:s', time() + 3600);
+Database::run('UPDATE administradores SET reset_token = ?, reset_expira = ? WHERE id = ?', [$hash, $expira, $admin['id']]);
+
+$base = (string) \config('app.base_url');
+$link = $base . '/recuperar.html?token=' . $token . '&correo=' . urlencode($correo);
+$cuerpo = '<p>Hola ' . htmlspecialchars($admin['nombre']) . ',</p>'
+    . '<p>Para restablecer tu contrasena haz clic en el siguiente enlace (valido 1 hora):</p>'
+    . '<p><a href="' . $link . '">' . $link . '</a></p>'
+    . '<p>Si no solicitaste esto, ignora este correo.</p>';
+$env = Mailer::enviar($correo, 'Recuperacion de contrasena - MiaTech', $cuerpo);
+
+if (\config('app.debug')) {
+    $generico['enviado'] = $env['ok'] ?? false;
+    if (empty($env['ok'])) $generico['smtp'] = $env['error'] ?? '';
+}
+Response::ok($generico);

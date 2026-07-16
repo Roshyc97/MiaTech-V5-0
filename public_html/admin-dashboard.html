@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi@Tech - Administration Dashboard</title>
+    <link rel="stylesheet" href="./css/admin-dashboard.css">
+    <link rel="stylesheet" href="./css/admin-sections/estudiantes.css">
+    <link rel="stylesheet" href="./css/admin-sections/periodos.css">
+    <link rel="stylesheet" href="./css/admin-sections/docentes.css">
+    <link rel="stylesheet" href="./css/admin-sections/estadisticas.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="admin-wrapper">
+        <!-- SIDEBAR (Menú Lateral) -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <h2>Mi@Tech</h2>
+                <div class="sidebar-toggle" id="sidebarToggle">☰</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- Menú dinámico según rol - generado por JS -->
+                <div id="sidebarMenu"></div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btnLogout" class="btn-logout">
+                    🚪 Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main">
+            <!-- HEADER -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <button id="headerMenuToggle" class="header-menu-toggle">☰</button>
+                    <h1 id="sectionTitle">Dashboard</h1>
+                </div>
+
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="userName" class="user-name">Admin</span>
+                        <span id="userRole" class="user-role">TI</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENIDO DINÁMICO -->
+            <div class="admin-content">
+                <div id="contentArea" class="content-area">
+                    <!-- Las secciones se cargan aquí dinámicamente -->
+                    <div class="loading-placeholder">
+                        <div class="spinner"></div>
+                        <p>Initializing dashboard...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <footer class="admin-footer">
+                <p>&copy; 2026 Instituto Tecnológico Superior Japón | Mi@Tech v4.0</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Modal para cambio de contraseña obligatorio (first login) -->
+    <div id="changePasswordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Change Password Required</h2>
+                <p>You must change your temporary password to continue</p>
+            </div>
+
+            <form id="changePasswordForm">
+                <div id="modalError" class="error-message" style="display: none; margin-bottom: 20px;"></div>
+
+                <div class="form-group">
+                    <label for="currentPwd">Current Password (Temporary)</label>
+                    <input type="password" id="currentPwd" placeholder="Enter your temporary password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="newPwd">New Password (min 8 characters)</label>
+                    <input type="password" id="newPwd" placeholder="Enter a strong password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPwd">Confirm New Password</label>
+                    <input type="password" id="confirmPwd" placeholder="Re-enter your new password" required />
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-modal-primary" style="width: 100%;">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="./js/admin-sections/estudiantes.js"></script>
+    <script src="./js/admin-sections/periodos.js"></script>
+    <script src="./js/admin-sections/docentes.js"></script>
+    <script src="./js/admin-sections/estadisticas.js"></script>
+    <script src="./js/admin-sections/administradores.js"></script>
+    <script src="./js/admin-dashboard.js"></script>
+</body>
+</html>

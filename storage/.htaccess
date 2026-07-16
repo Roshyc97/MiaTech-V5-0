@@ -1,0 +1,3 @@
+# Defensa en profundidad: aunque storage/ vive fuera del web root, se niega todo acceso directo.
+# Los archivos (videos, PDFs) se sirven exclusivamente por endpoint PHP.
+Require all denied

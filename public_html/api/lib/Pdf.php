@@ -1,0 +1,201 @@
+<?php
+namespace MiaTech;
+
+/**
+ * Pdf — generador minimo y autocontenido (sin dependencias) para constancias.
+ * Fuente core Helvetica. Suficiente para el esqueleto; se puede cambiar a mPDF luego.
+ * Dos documentos: constancia de alumno (SIN nota) y evaluacion de profesor (CON nota).
+ */
+class Pdf
+{
+    // A4 en puntos
+    private const W = 595.28;
+    private const H = 841.89;
+    private const MARGIN = 56;
+
+    private array $pages = [];   // cada pagina: string de operadores de contenido
+    private string $buf = '';    // pagina en construccion
+    private float $y;
+
+    public function __construct()
+    {
+        $this->y = self::H - self::MARGIN;
+    }
+
+    private function ascii(string $s): string
+    {
+        if (function_exists("iconv")) {
+            $r = @iconv("UTF-8", "ASCII//TRANSLIT", $s);
+            if ($r !== false) return $r;
+        }
+        $map = ["á"=>"a","é"=>"e","í"=>"i","ó"=>"o","ú"=>"u","ñ"=>"n","Á"=>"A","É"=>"E","Í"=>"I","Ó"=>"O","Ú"=>"U","Ñ"=>"N","ü"=>"u"];
+        $s = strtr($s, $map);
+        return preg_replace("/[^\x20-\x7E]/", "", $s);
+    }
+
+    private function esc(string $s): string
+    {
+        return str_replace(['\\', '(', ')', "\r"], ['\\\\', '\\(', '\\)', ''], $s);
+    }
+
+    private function nuevaPagina(): void
+    {
+        if ($this->buf !== '') {
+            $this->pages[] = $this->buf;
+            $this->buf = '';
+        }
+        $this->y = self::H - self::MARGIN;
+    }
+
+    private function salto(float $h): void
+    {
+        if ($this->y - $h < self::MARGIN) {
+            $this->nuevaPagina();
+        }
+        $this->y -= $h;
+    }
+
+    private function escribir(string $texto, float $size, bool $bold = false): void
+    {
+        $font = $bold ? '/F2' : '/F1';
+        $maxChars = (int) floor((self::W - 2 * self::MARGIN) / ($size * 0.52));
+        $texto = $this->ascii($texto);
+        foreach (explode("\n", $texto) as $parrafo) {
+            $lineas = ($parrafo === '') ? [''] : $this->wrap($parrafo, $maxChars);
+            foreach ($lineas as $ln) {
+                $this->salto($size * 1.45);
+                $x = self::MARGIN;
+                $this->buf .= sprintf(
+                    "BT %s %.2f Tf %.2f %.2f Td (%s) Tj ET\n",
+                    $font, $size, $x, $this->y, $this->esc($ln)
+                );
+            }
+        }
+    }
+
+    private function wrap(string $texto, int $max): array
+    {
+        $palabras = explode(' ', $texto);
+        $lineas = [];
+        $actual = '';
+        foreach ($palabras as $p) {
+            if ($actual === '') {
+                $actual = $p;
+            } elseif (strlen($actual) + 1 + strlen($p) <= $max) {
+                $actual .= ' ' . $p;
+            } else {
+                $lineas[] = $actual;
+                $actual = $p;
+            }
+        }
+        if ($actual !== '') $lineas[] = $actual;
+        return $lineas ?: [''];
+    }
+
+    public function titulo(string $t): self { $this->escribir($t, 17, true); $this->salto(6); return $this; }
+    public function subtitulo(string $t): self { $this->salto(6); $this->escribir($t, 12.5, true); return $this; }
+    public function parrafo(string $t): self { $this->escribir($t, 10.5, false); return $this; }
+    public function campo(string $k, string $v): self { $this->escribir($k . ': ' . $v, 10.5, false); return $this; }
+    public function separador(): self { $this->salto(10); return $this; }
+
+    /** Construye el PDF y devuelve los bytes. */
+    public function build(): string
+    {
+        $this->nuevaPagina();
+        $objs = [];
+        // 1 catalog, 2 pages, fonts 3/4, luego por cada pagina: page obj + content obj
+        $nPages = count($this->pages);
+        $kids = [];
+        $objNum = 5;
+        $pageObjs = [];
+        $contentObjs = [];
+        for ($i = 0; $i < $nPages; $i++) {
+            $pageObj = $objNum++;
+            $contentObj = $objNum++;
+            $pageObjs[] = $pageObj;
+            $contentObjs[] = $contentObj;
+            $kids[] = "$pageObj 0 R";
+        }
+
+        $objs[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+        $objs[2] = "<< /Type /Pages /Kids [" . implode(' ', $kids) . "] /Count $nPages >>";
+        $objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+        $objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+        for ($i = 0; $i < $nPages; $i++) {
+            $po = $pageObjs[$i];
+            $co = $contentObjs[$i];
+            $objs[$po] = sprintf(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents %d 0 R >>",
+                self::W, self::H, $co
+            );
+            $stream = $this->pages[$i];
+            $objs[$co] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "endstream";
+        }
+
+        ksort($objs);
+        $pdf = "%PDF-1.4\n";
+        $offsets = [];
+        foreach ($objs as $num => $body) {
+            $offsets[$num] = strlen($pdf);
+            $pdf .= "$num 0 obj\n$body\nendobj\n";
+        }
+        $xrefPos = strlen($pdf);
+        $count = count($objs) + 1;
+        $pdf .= "xref\n0 $count\n0000000000 65535 f \n";
+        for ($i = 1; $i < $count; $i++) {
+            $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
+        }
+        $pdf .= "trailer\n<< /Size $count /Root 1 0 R >>\nstartxref\n$xrefPos\n%%EOF";
+        return $pdf;
+    }
+
+    // ---------- Documentos ----------
+
+    public static function constanciaAlumno(array $d): string
+    {
+        $p = new self();
+        $p->titulo('Mi@Tech - Constancia de Evaluacion Oral')
+          ->parrafo('Instituto Tecnologico Superior Japon - Centro de Idiomas')
+          ->separador()
+          ->subtitulo('Datos del estudiante')
+          ->campo('Nombre', trim(($d['nombre'] ?? '') . ' ' . ($d['apellido'] ?? '')))
+          ->campo('Correo', $d['correo'] ?? '')
+          ->campo('Carrera', $d['carrera'] ?? '')
+          ->campo('Periodo', $d['periodo'] ?? '')
+          ->campo('Fecha', $d['fecha'] ?? date('Y-m-d H:i'))
+          ->separador()
+          ->subtitulo('Feedback')
+          ->parrafo($d['justificacion'] ?? '')
+          ->separador()
+          ->subtitulo('Transcript')
+          ->parrafo($d['transcripcion'] ?? '')
+          ->separador()
+          ->parrafo('Nota: esta constancia no incluye calificacion. El resultado se entrega al instructor.');
+        return $p->build();
+    }
+
+    public static function evaluacionProfesor(array $d): string
+    {
+        $p = new self();
+        $p->titulo('Mi@Tech - Evaluacion (Instructor)')
+          ->parrafo('Instituto Tecnologico Superior Japon - Centro de Idiomas')
+          ->separador()
+          ->subtitulo('Datos del estudiante')
+          ->campo('Nombre', trim(($d['nombre'] ?? '') . ' ' . ($d['apellido'] ?? '')))
+          ->campo('Correo', $d['correo'] ?? '')
+          ->campo('Carrera', $d['carrera'] ?? '')
+          ->campo('Periodo', $d['periodo'] ?? '')
+          ->campo('Fecha', $d['fecha'] ?? date('Y-m-d H:i'))
+          ->separador()
+          ->subtitulo('Resultado CEFR')
+          ->campo('Nivel', $d['nivel_cefr'] ?? '')
+          ->campo('Confianza', $d['confianza'] ?? '')
+          ->separador()
+          ->subtitulo('Justificacion')
+          ->parrafo($d['justificacion'] ?? '')
+          ->separador()
+          ->subtitulo('Transcript')
+          ->parrafo($d['transcripcion'] ?? '');
+        return $p->build();
+    }
+}

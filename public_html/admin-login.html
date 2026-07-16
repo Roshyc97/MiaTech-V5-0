@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi@Tech - Administration Login</title>
+    <link rel="stylesheet" href="./css/admin-login.css">
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <h1>🔐 Mi@Tech Administration</h1>
+                <p class="subtitle">5.0 - Management Portal</p>
+            </div>
+
+            <!-- Formulario -->
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="correo">Email Address</label>
+                    <input
+                        type="email"
+                        id="correo"
+                        name="correo"
+                        placeholder="admin@itsjapon.edu.ec"
+                        required
+                        autocomplete="email"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="••••••••"
+                        required
+                        autocomplete="current-password"
+                    />
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">LOGIN</button>
+            </form>
+
+            <!-- Mensaje de error -->
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <!-- Spinner de carga -->
+            <div id="loadingSpinner" class="spinner" style="display: none;">
+                <div class="spinner-circle"></div>
+                <p>Verifying credentials...</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p>Roles: TI, Coordinador, Docente</p>
+                <p><a href="/">← Back to Student Portal</a></p>
+                <p style="margin-top: 16px; font-size: 11px; color: #9ca3af;">
+                    Mi@Tech v5.0 © 2026 Instituto Tecnológico Superior Japón
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/admin-login.js"></script>
+</body>
+</html>

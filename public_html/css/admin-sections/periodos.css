@@ -1,0 +1,61 @@
+/* Periodos Section Styles - reusa estilos de estudiantes.css */
+/* Ver admin-sections/estudiantes.css para referencia */
+
+.periodos-section {
+    /* Hereda estilos de .section-content */
+}
+
+/* Tabla con hover effect para filas */
+#periodosTableBody tr {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#periodosTableBody tr:hover {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Modal para evaluaciones */
+#modalEvaluaciones .modal-content {
+    max-width: 800px;
+    min-width: 500px;
+}
+
+#modalEvaluaciones table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#modalEvaluaciones th,
+#modalEvaluaciones td {
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: left;
+}
+
+#modalEvaluaciones th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+}
+
+#modalEvaluaciones tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+    #modalEvaluaciones .modal-content {
+        min-width: 90vw;
+        max-width: 90vw;
+    }
+
+    #modalEvaluaciones table {
+        font-size: 11px;
+    }
+
+    #modalEvaluaciones th,
+    #modalEvaluaciones td {
+        padding: 8px;
+    }
+}

@@ -1,0 +1,2 @@
+# Codigo interno: nunca se accede directo por web (solo se incluye desde index.php)
+Require all denied
