@@ -4,13 +4,13 @@ namespace MiaTech;
 /** Extraccion de audio del video con ffmpeg (confirmado disponible en SiteGround, Fase 0). */
 class Ffmpeg
 {
-    /** Extrae el audio a webm/opus y devuelve la ruta del audio. */
+    /** Extrae el audio a mp3 y devuelve la ruta del audio. */
     public static function extraerAudio(string $rutaVideo): string
     {
         $bin = \config('ffmpeg.bin');
-        $rutaAudio = preg_replace('/\.[^.]*$/', '', $rutaVideo) . '_audio.webm';
+        $rutaAudio = preg_replace('/\.[^.]*$/', '', $rutaVideo) . '_audio.mp3';
         $cmd = sprintf(
-            '%s -y -i %s -vn -c:a libopus -b:a 64k -f webm %s 2>&1',
+            '%s -y -i %s -vn -c:a libmp3lame -b:a 64k %s 2>&1',
             escapeshellarg($bin),
             escapeshellarg($rutaVideo),
             escapeshellarg($rutaAudio)

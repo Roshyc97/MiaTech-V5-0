@@ -291,16 +291,19 @@ function getContentForSection(section, rol) {
                         </div>
 
                         <div class="form-group">
+                            <label for="intentosEditEstudiante">Attempts</label>
+                            <div style="display: flex; gap: 10px; align-items: center; text-align:center;">
+                                <input type="number" id="intentosEditEstudiante" disabled style="background-color: #555; cursor: not-allowed; flex: 1;text-align:center;">
+                                <button type="button" id="btnResetAttempts" class="btn-modal-secondary" style="white-space: nowrap; width: 50%;">🔄 Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label for="statusEditEstudiante">Status</label>
                             <select id="statusEditEstudiante">
                                 <option value="1">🟢 Active</option>
                                 <option value="0">🔴 Inactive</option>
                             </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="intentosEditEstudiante">Attempts (Read Only)</label>
-                            <input type="number" id="intentosEditEstudiante" disabled style="background-color: #555; cursor: not-allowed;">
                         </div>
 
                         <div class="form-error" id="formErrorEstudiante"></div>

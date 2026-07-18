@@ -51,6 +51,15 @@
         overflow-x: hidden;
     }
 
+    .scroll-container {
+        overflow-y:auto;
+        scrollbar-gutter: stable;
+    }
+
+    .scroll-container{
+        scrollbar-gutter: stable both-edges;
+    }
+
 /* ============================================
    HEADER INSTITUCIONAL
    ============================================ */
@@ -64,7 +73,6 @@
         align-items: center;
         padding: 5px 5px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        position: absolute;
         z-index: 1;
         width: 100%;
     }
@@ -93,10 +101,8 @@
 
     .progress-container {
         background-color: var(--color-institucional-morado);
-        position: absolute;
         padding: 20px;
         width: 100%;
-        padding-top: 100px;
     }
 
     .progress-bar {
@@ -213,7 +219,6 @@
         box-shadow: var(--box-shadow);
         padding: 20px;
         position: relative;
-        margin-top:220px;
     }
 
 /* ============================================

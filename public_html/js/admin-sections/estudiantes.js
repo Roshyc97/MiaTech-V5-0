@@ -38,6 +38,9 @@ async function initEstudiantesSection() {
         const form = document.getElementById('formEditarEstudiante');
         if (form) form.addEventListener('submit', handleSaveEstudiante);
 
+        const btnResetAttempts = document.getElementById('btnResetAttempts');
+        if (btnResetAttempts) btnResetAttempts.addEventListener('click', handleResetAttempts);
+
         await loadEstudiantes(1);
     } catch (error) {
         console.error('[Estudiantes] Init error:', error);
@@ -340,6 +343,30 @@ async function toggleEstadoEstudiante(idEstudianteToggle, nuevoEstadoToggle) {
     } catch (error) {
         console.error('[Estudiantes] Toggle estado error:', error);
         showToastEstudiantes('Error updating status: ' + error.message, 'error');
+    }
+}
+
+async function handleResetAttempts(event) {
+    event.preventDefault();
+    if (!editandoId) { showToastEstudiantes('No student selected', 'error'); return; }
+    if (!confirm('Are you sure you want to reset all attempts for this student? They will be able to take the evaluation again.')) return;
+    try {
+        console.log('[ResetAttempts] Resetting attempts for student:', editandoId);
+        const response = await fetch(`/api/admin/estudiantes/${editandoId}/intentos`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        const data = await response.json();
+        if (!response.ok) { showToastEstudiantes(data.error || 'Error resetting attempts', 'error'); return; }
+        console.log('[ResetAttempts] ✅ Attempts reset');
+        showToastEstudiantes('Attempts reset successfully', 'success');
+        // Actualizar el campo de intentos en el modal
+        document.getElementById('intentosEditEstudiante').value = '0';
+        await loadEstudiantes(paginaActual);
+    } catch (error) {
+        console.error('[Estudiantes] Reset attempts error:', error);
+        showToastEstudiantes('Error resetting attempts: ' + error.message, 'error');
     }
 }
 
@@ -650,4 +677,5 @@ async function showIntentosEstudiante(estId) {
     window.deleteSelectedEstudiantes = deleteSelectedEstudiantes;
     window.deleteAllEstudiantes = deleteAllEstudiantes;
     window.toggleEstadoEstudiante = toggleEstadoEstudiante;
+    window.handleResetAttempts = handleResetAttempts;
 })();

@@ -188,6 +188,12 @@ if (preg_match('#^estudiantes/(\d+)/estado$#', $sub, $mm) && $m === 'PATCH') {
     Database::run('UPDATE estudiantes SET activo = ? WHERE id = ?', [(int) Request::input('activo', 1), (int) $mm[1]]);
     Response::ok();
 }
+if (preg_match('#^estudiantes/(\d+)/intentos$#', $sub, $mm) && $m === 'DELETE') {
+    $rol(['ti', 'coordinador']);
+    $idEstudiante = (int) $mm[1];
+    Database::run('DELETE FROM intentos_evaluacion WHERE estudiante_id = ?', [$idEstudiante]);
+    Response::ok();
+}
 
 // ============ CARGA MASIVA CSV ============
 // El frontend (estudiantes.js) llama a "importar-masivo"; se acepta tambien "importar" por compatibilidad.
