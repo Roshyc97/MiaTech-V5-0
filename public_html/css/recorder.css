@@ -4,18 +4,6 @@
    Complementa styles.css sin sobreescribirlo.
    ============================================ */
 
-   /* ============================================
-    Página principal
-   ============================================ */
-
-.main-container{
-    display: grid;
-    padding: 20px;
-    max-width: 90%;
-    margin: 0 auto;
-    font-family: var(--font-family);
-    color: var(--color-texto);
-}
 
 /* ============================================
    GRID DE IMÁGENES (selección de nivel)
@@ -218,23 +206,18 @@
    CONTENEDOR VIDEO E IMAGEN
    ============================================ */
 
-/* Mantener avatar y preview fijos para evitar solapamientos al hacer scroll */
-.animation-container {
-    padding: 10px;
-    z-index: 1;
-}
-
 
 /* El preview de cámara se mantiene debajo del avatar y también queda "pegado" en el flujo
    usando sticky. Ajustar top si cambia el tamaño del avatar. */
 .recording-visuals {
+    width: clamp(80px, 250px, 100%);
+    height: auto;
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     justify-content: center;
     align-items: flex-start;
     margin: 20px 0;
-    position: -webkit-sticky;
     position: sticky;
     top: 160px; /* sitúa el preview debajo del avatar */
     z-index: 999; /* menor que avatar para que no lo tape */

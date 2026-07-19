@@ -86,7 +86,7 @@
 
         <!-- ÁREA DE TRABAJO -->
         <div class="work-area">
-                    <!-- AVATAR -->
+            <!-- AVATAR -->
             <div class="animation-container" id="animation-container">
                 <div class="avatar-container" id="avatar-container">
                     <div class="avatar-glow"></div>
@@ -105,242 +105,249 @@
 
             </div>
 
-            <!-- SECCIÓN 1: HOME -->
-            <section id="home-section" class="section active">
-                <div class="section-content">
-                    <h1 class="section-title">🎓 Mi@Tech Assessment</h1>
-                    <div class="welcome-message">
-                        <h3>Hello! I'm MiaTech, it's a pleasure to have you here.</h3>
-                        <h3>I'll be your assistant and evaluator today.</h3>
+            <div class="section-area" id="section-area">
+                <!-- SECCIÓN 1: HOME -->
+                <section id="home-section" class="section active">
+                    <div class="section-content">
+                        <h1 class="section-title">🎓 Mi@Tech Assessment</h1>
+                        <div class="welcome-message">
+                            <h3>Hello! I'm MiaTech, it's a pleasure to have you here.</h3>
+                            <h3>I'll be your assistant and evaluator today.</h3>
+                        </div>
                     </div>
-                </div>
-                <button id="btn-begin-assessment" class="btn-primary">
-                    🏠 Test Assessment
-                </button>
-            </section>
+                    <button id="btn-begin-assessment" class="btn-primary">
+                        🏠 Test Assessment
+                    </button>
+                </section>
 
-            <!-- SECCIÓN 2: LOGIN -->
-            <section id="student-info-section" class="section">
-                <div class="section-content">
-                    <h2 style="color:var(--color-institucional-morado);margin-bottom:30px;text-align:center;">
-                        👤 Student Login
-                    </h2>
-                    <p style="text-align:center;color:#666;margin-bottom:40px;">
-                        Log in with your institutional email to start the assessment.
+                <!-- SECCIÓN 2: LOGIN -->
+                <section id="student-info-section" class="section">
+                    <div class="section-content">
+                        <h2 style="color:var(--color-institucional-morado);margin-bottom:30px;text-align:center;">
+                            👤 Student Login
+                        </h2>
+                        <p style="text-align:center;color:#666;margin-bottom:20px;">
+                            Log in with your institutional email to start the assessment.
 
-                    </p>
-                    <!-- El contenido del form lo reescribe recorder.js en initLogin() -->
-                    <form id="student-form" style="max-width:500px;margin:0 auto;"></form>
-                </div>
-            </section>
-
-
-            <!-- SECCIÓN 3: INSTRUCTIONS -->
-            <section id="instructions-section" class="section">
-                <div class="section-content">
-                    <h2 style="color:var(--color-institucional-morado);margin-bottom:20px;text-align:center;">
-                        📋 Assessment Instructions
-                    </h2>
-
-                    <div style="max-width:680px;margin:0 auto;line-height:1.8;color:#333;font-size:15px;">
-
-                        <p style="margin-bottom:18px;">
-                            Hello <strong id="student-name-display">.</strong>!<br>
-                            My name is <strong>Mi@Tech.</strong><br>
-                            Welcome to the <strong>Mi@Tech English Oral Assessment.</strong>.<br>
-                            I will be your assistant and evaluator during this English oral assessment.<br>                         
-                            Please read the following instructions carefully before starting your evaluation.
                         </p>
-
-                        <h3 style="color:var(--color-institucional-morado);margin:20px 0 10px;">Important Notes</h3>
-                        <ul style="padding-left:20px;margin-bottom:18px;">
-                            <li>Make sure your microphone and camera are <strong>enabled</strong> before starting.</li>
-                            <li>You will be shown a <strong>random image</strong>. Your task is to describe it.</li>
-                            <li>First of all, provide a <strong>short personal introduction</strong> (name, age, major, etc.).</li>
-                            <li>You are allowed <strong>only one re-recording attempt</strong>. Use it wisely.</li>
-                            <li>A <strong>live transcription</strong> will appear on screen as a visual aid — it is <em>not graded</em>.</li>
-                            <li>Speak <strong>clearly and at a natural pace</strong>.</li>
-                        </ul>
-
-                        <h3 style="color:var(--color-institucional-morado);margin:20px 0 10px;">Platform Controls</h3>
-
-                        <div id="platform-controls" class="platform-controls">
-                            <!-- Placeholder: camera preview -->
-                            <div>
-                                <div id="instructions-img-camera" style="width:80px;height:80px;margin:0 auto 10px;background:#e0dff5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">📹</div>
-                                <strong>Camera Preview</strong>
-                                <p style="font-size:13px;color:#666;margin-top:6px;">Your camera will be active during recording for evaluation evidence.</p>
-                            </div>
-                            <!-- Placeholder: microphone button -->
-                            <div>
-                                <div id="instructions-img-mic" style="width:80px;height:80px;margin:0 auto 10px;background:#e0dff5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">🎤</div>
-                                <strong>Microphone Button</strong>
-                                <p style="font-size:13px;color:#666;margin-top:6px;">Press once to <em>start</em> recording, press again to <em>stop</em>.</p>
-                            </div>
-                            <!-- Placeholder: submit button -->
-                            <div>
-                                <div id="instructions-img-submit" style="width:80px;height:80px;margin:0 auto 10px;background:#e0dff5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">📤</div>
-                                <strong>Submit Response</strong>
-                                <p style="font-size:13px;color:#666;margin-top:6px;">After stopping the recording, click this button to send your response.</p>
-                            </div>
-                        </div>
-
-
+                        <!-- El contenido del form lo reescribe recorder.js en initLogin() -->
+                        <form id="student-form" style="max-width:500px;margin:0 auto;"></form>
                     </div>
-
-                    <div style="text-align:center;margin-top:30px;">
-                        <button id="btn-start-assessment" class="btn-primary" style="font-size:16px;padding:14px 40px;">
-                            ▶️ Start Assessment
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- MODAL DE RE-GRABACIÓN -->
-            <div class="modal-overlay" id="modal-rerecord">
-                <div class="modal-content" style="max-width:520px;">
-                    <div class="modal-title" style="color:#e67e22;">⚠️ Re-recording Warning</div>
-                    <div class="modal-text" style="text-align:left;line-height:1.7;font-size:14px;">
-                        <p>By restarting the recording, a new evaluation will be initiated. Please be aware of the following:</p>
-                        <ul style="padding-left:20px;margin:12px 0;">
-                            <li>Your <strong>current recording will be permanently discarded</strong>.</li>
-                            <li>A <strong>different image</strong> will be randomly assigned for the new attempt.</li>
-                            <li>This is your <strong>only opportunity</strong> to re-record. No further attempts will be allowed.</li>
-                        </ul>
-                        <p style="color:#c0392b;font-weight:bold;margin-top:12px;">
-                            ⚠️ Note: This action cannot be undone.
-                        </p>
-                    </div>
-                    <div class="modal-buttons">
-                        <button class="modal-btn modal-btn-secondary" onclick="cancelRerecord()">
-                            Cancel
-                        </button>
-                        <button class="modal-btn modal-btn-primary" onclick="confirmRerecord()"
-                                style="background:#e67e22;color:white;">
-                            Restart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN 4: RECORDING -->
-            <section id="recording-section" class="section">
-                <div class="section-content">
+                </section>
 
 
+                <!-- SECCIÓN 3: INSTRUCTIONS -->
+                <section id="instructions-section" class="section">
+                    <div class="section-content">
+                        <h2 style="color:var(--color-institucional-morado);margin-bottom:20px;text-align:center;">
+                            📋 Assessment Instructions
+                        </h2>
 
-                    <!-- Contenido derecho  -->
-                    <div style="grid-column: 2;">
-                        <h2 class="section-title">🎤 Recording</h2>
+                        <div style="max-width:680px;margin:0 auto;line-height:1.8;color:#333;font-size:15px;">
 
-                        <!-- Task box -->
-                        <div class="recording-task">
-                            <div class="task-header">📝 Your Task</div>
-                            <div class="task-content">                                                            
-                                <h3 style="color:var(--color-institucional-morado);margin:20px 0 10px;">How the Assessment Works</h3>
-                                <ol style="padding-left:20px;margin-bottom:18px;">
-                                    <li>You will be shown a <strong>random image</strong>.
-                                    <li>First of all, provide a <strong>short personal introduction</strong> (name, age, major, etc.).</li>
-                                    <li>Your task is to describe the picture.</li>
-                                    <li>Press the microphone button to start and finish your recording.</li>
-                                    <li>Your recording must be between <strong>1 and 5 minutes</strong> long.</li>
-                                    <li>Once you finish recording, click <strong>"Submit Response"</strong> to send your evaluation.</li>
-                                    <li>Press <strong>"Record Again"</strong> if you want to re-record your response.</li>
-                                    <li>You are allowed <strong>only one re-recording attempt.</strong>.</li>
-                                    <li>You can send your record <strong>only once</strong>, so make sure to speak clearly and confidently.</li>
-                                </ol>
-                            </div>
-                        </div>
+                            <p style="margin-bottom:18px;">
+                                Hello <strong id="student-name-display">.</strong>!<br>
+                                My name is <strong>Mi@Tech.</strong><br>
+                                Welcome to the <strong>Mi@Tech English Oral Assessment.</strong>.<br>
+                                I will be your assistant and evaluator during this English oral assessment.<br>                         
+                                Please read the following instructions carefully before starting your evaluation.
+                            </p>
 
-                        <!-- Imagen seleccionada -->
-                        <div class="selected-image-container">
-                            <img id="selected-level-image" > 
-                        </div>
+                            <h3 style="color:var(--color-institucional-morado);margin:20px 0 10px;">Important Notes</h3>
+                            <ul style="padding-left:20px;margin-bottom:18px;">
+                                <li>Make sure your microphone and camera are <strong>enabled</strong> before starting.</li>
+                                <li>You will be shown a <strong>random image</strong>. Your task is to describe it.</li>
+                                <li>First of all, provide a <strong>short personal introduction</strong> (name, age, major, etc.).</li>
+                                <li>You are allowed <strong>only one re-recording attempt</strong>. Use it wisely.</li>
+                                <li>A <strong>live transcription</strong> will appear on screen as a visual aid — it is <em>not graded</em>.</li>
+                                <li>Speak <strong>clearly and at a natural pace</strong>.</li>
+                            </ul>
 
-                        <!-- Recording Info  -->
-                        <div class="recording-info">
+                            <h3 style="color:var(--color-institucional-morado);margin:20px 0 10px;">Platform Controls</h3>
 
-                            <div class="time-record" id="time-record">
-                                <div class="timer-current" id="timer-current">00:00</div>
-                                <div class="timer-display" id="timer-display">
-                                    <div class="timer-required" id="timer-required">Required: 1–5 min</div>
+                            <div id="platform-controls" class="platform-controls">
+                                <!-- Placeholder: camera preview -->
+                                <div>
+                                    <div id="instructions-img-camera" style="width:80px;height:80px;margin:0 auto 10px;background:#e0dff5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">📹</div>
+                                    <strong>Camera Preview</strong>
+                                    <p style="font-size:13px;color:#666;margin-top:6px;">Your camera will be active during recording for evaluation evidence.</p>
                                 </div>
-                                <!-- Botón de micrófono -->
-                                <div class="recording-controls" id="recording-controls">
-                                    <button class="mic-button" id="mic-button" onclick="toggleRecording()" disabled>
-                                        <div id="mic-icon">
-                                            <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                                <line x1="12" y1="19" x2="12" y2="23"/>
-                                                <line x1="8" y1="23" x2="16" y2="23"/>
-                                            </svg>
-                                        </div>
-                                    </button>
-                                </div>  
-                                <p>Press the buttom </p>                              
+                                <!-- Placeholder: microphone button -->
+                                <div>
+                                    <div id="instructions-img-mic" style="width:80px;height:80px;margin:0 auto 10px;background:#e0dff5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">🎤</div>
+                                    <strong>Microphone Button</strong>
+                                    <p style="font-size:13px;color:#666;margin-top:6px;">Press once to <em>start</em> recording, press again to <em>stop</em>.</p>
+                                </div>
+                                <!-- Placeholder: submit button -->
+                                <div>
+                                    <div id="instructions-img-submit" style="width:80px;height:80px;margin:0 auto 10px;background:#e0dff5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;">📤</div>
+                                    <strong>Submit Response</strong>
+                                    <p style="font-size:13px;color:#666;margin-top:6px;">After stopping the recording, click this button to send your response.</p>
+                                </div>
                             </div>
+
+
                         </div>
 
-
-                        <!-- Transcripción en vivo -->
-                        <div class="transcription-container" id="transcription-container">
-                            <h3>📝 Live Transcription <span style="font-size:11px;font-weight:400;color:#888;">(visual aid only — not graded)</span></h3>
-                            <div class="transcription-text transcription-empty" id="transcription-text">
-                                Start speaking to see your transcription here...
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="recording-buttons">
-                            <button class="action-button btn-start-over" id="btn-start-over"
-                                    onclick="startOverRecording()" style="display:none;">
-                                🔄 Record Again
-                            </button>
-                            <button class="action-button btn-submit" id="btn-submit"
-                                    onclick="enviarRespuesta()" disabled>
-                                📤 Submit Response
-                            </button>
-                            <button class="action-button btn-retry" id="btn-retry"
-                                    style="display:none;">
-                                🔄 Retry
+                        <div style="text-align:center;margin-top:30px;">
+                            <button id="btn-start-assessment" class="btn-primary" style="font-size:16px;padding:14px 40px;">
+                                ▶️ Start Assessment
                             </button>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- SECCIÓN 4: RESULTS (Confirmación de envío) -->
-            <section id="results-section" class="section">
-                <div class="section-content">
-                    <h2 class="section-title">✅ Assessment Submitted</h2>
-
-                    <div class="results-detailed" id="results-detailed">
-                        <div style="text-align:center;padding:40px 20px;">
-                            <p style="font-size:18px;color:#27ae60;margin-bottom:20px;line-height:1.8;">
-                                ✓ Your recording has been submitted successfully.<br/>
-                                <br/>
-                                Your assessment will be evaluated by your instructor.<br/>
-                                You will receive your results through your course portal.
+                <!-- MODAL DE RE-GRABACIÓN -->
+                <div class="modal-overlay" id="modal-rerecord">
+                    <div class="modal-content" style="max-width:520px;">
+                        <div class="modal-title" style="color:#e67e22;">⚠️ Re-recording Warning</div>
+                        <div class="modal-text" style="text-align:left;line-height:1.7;font-size:14px;">
+                            <p>By restarting the recording, a new evaluation will be initiated. Please be aware of the following:</p>
+                            <ul style="padding-left:20px;margin:12px 0;">
+                                <li>Your <strong>current recording will be permanently discarded</strong>.</li>
+                                <li>A <strong>different image</strong> will be randomly assigned for the new attempt.</li>
+                                <li>This is your <strong>only opportunity</strong> to re-record. No further attempts will be allowed.</li>
+                            </ul>
+                            <p style="color:#c0392b;font-weight:bold;margin-top:12px;">
+                                ⚠️ Note: This action cannot be undone.
                             </p>
                         </div>
+                        <div class="modal-buttons">
+                            <button class="modal-btn modal-btn-secondary" onclick="cancelRerecord()">
+                                Cancel
+                            </button>
+                            <button class="modal-btn modal-btn-primary" onclick="confirmRerecord()"
+                                    style="background:#e67e22;color:white;">
+                                Restart
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="results-buttons" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-                    <button class="btn-primary" id="btn-download-pdf" onclick="descargarPdfAlumno()" style="display:none;">
-                        📄 Download Feedback (PDF)
-                    </button>
-                    <button class="btn-primary" onclick="location.reload()">
-                        🏠 Back to Home
-                    </button>
-                </div>
-            </section>
+                <!-- SECCIÓN 4: RECORDING -->
+                <section id="recording-section" class="section">
+                    <div class="section-content">
 
+
+
+                        <!-- Contenido derecho  -->
+                        <div style="grid-column: 2;">
+                            <h2 class="section-title">🎤 Recording</h2>
+
+                            <!-- Task box -->
+                            <div class="recording-task">
+                                <div class="task-header">📝 Your Task</div>
+                                <div class="task-content">                                                            
+                                    <h3 style="color:var(--color-institucional-morado);margin:20px 0 10px;">How the Assessment Works</h3>
+                                    <ol style="padding-left:20px;margin-bottom:18px;">
+                                        <li>You will be shown a <strong>random image</strong>.
+                                        <li>First of all, provide a <strong>short personal introduction</strong> (name, age, major, etc.).</li>
+                                        <li>Your task is to describe the picture.</li>
+                                        <li>Press the microphone button to start and finish your recording.</li>
+                                        <li>Your recording must be between <strong>1 and 5 minutes</strong> long.</li>
+                                        <li>Once you finish recording, click <strong>"Submit Response"</strong> to send your evaluation.</li>
+                                        <li>Press <strong>"Record Again"</strong> if you want to re-record your response.</li>
+                                        <li>You are allowed <strong>only one re-recording attempt.</strong>.</li>
+                                        <li>You can send your record <strong>only once</strong>, so make sure to speak clearly and confidently.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <!-- Imagen seleccionada -->
+                            <div class="selected-image-container">
+                                <img id="selected-level-image" > 
+                            </div>
+
+                            <!-- Recording Info  -->
+                            <div class="recording-info">
+
+                                <div class="time-record" id="time-record">
+                                    <div class="timer-current" id="timer-current">00:00</div>
+                                    <div class="timer-display" id="timer-display">
+                                        <div class="timer-required" id="timer-required">Required: 1–5 min</div>
+                                    </div>
+                                    <!-- Botón de micrófono -->
+                                    <div class="recording-controls" id="recording-controls">
+                                        <button class="mic-button" id="mic-button" onclick="toggleRecording()" disabled>
+                                            <div id="mic-icon">
+                                                <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                                    <line x1="12" y1="19" x2="12" y2="23"/>
+                                                    <line x1="8" y1="23" x2="16" y2="23"/>
+                                                </svg>
+                                            </div>
+                                        </button>
+                                    </div>  
+                                    <p>Press the buttom </p>                              
+                                </div>
+                            </div>
+
+
+                            <!-- Transcripción en vivo -->
+                            <div class="transcription-container" id="transcription-container">
+                                <h3>📝 Live Transcription <span style="font-size:11px;font-weight:400;color:#888;">(visual aid only — not graded)</span></h3>
+                                <div class="transcription-text transcription-empty" id="transcription-text">
+                                    Start speaking to see your transcription here...
+                                </div>
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="recording-buttons">
+                                <button class="action-button btn-start-over" id="btn-start-over"
+                                        onclick="startOverRecording()" style="display:none;">
+                                    🔄 Record Again
+                                </button>
+                                <button class="action-button btn-submit" id="btn-submit"
+                                        onclick="enviarRespuesta()" disabled>
+                                    📤 Submit Response
+                                </button>
+                                <button class="action-button btn-retry" id="btn-retry"
+                                        style="display:none;">
+                                    🔄 Retry
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN 4: RESULTS (Confirmación de envío) -->
+                <section id="results-section" class="section">
+                    <div class="section-content">
+                        <h2 class="section-title">✅ Assessment Submitted</h2>
+
+                        <div class="results-detailed" id="results-detailed">
+                            <div style="text-align:center;padding:40px 20px;">
+                                <p style="font-size:18px;color:#27ae60;margin-bottom:20px;line-height:1.8;">
+                                    ✓ Your recording has been submitted successfully.<br/>
+                                    <br/>
+                                    Your assessment will be evaluated by your instructor.<br/>
+                                    You will receive your results through your course portal.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="results-buttons" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                        <button class="btn-primary" id="btn-download-pdf" onclick="descargarPdfAlumno()" style="display:none;">
+                            📄 Download Feedback (PDF)
+                        </button>
+                        <button class="btn-primary" onclick="location.reload()">
+                            🏠 Back to Home
+                        </button>
+                    </div>
+                </section>
+            </div>
         </div><!-- /work-area -->
     </main>
     <footer class="footer-home">
-        <div class="redes-sociales">
+        <div class="footer-page">
+            <p class="text">
+                © 2026 Universitario Japón. Todos los derechos reservados. Desarrollado por Mi@Tech System.
+            </p> 
+        </div>   
+        
+                <div class="redes-sociales">
             <a href="https://www.facebook.com/itsjapon" target="_blank" aria-label="Facebook" title="Facebook">
                 <i class="fa-brands fa-facebook-f social-icon" aria-hidden="true"></i>
             </a>
@@ -354,12 +361,6 @@
                 <i class="fa-brands fa-tiktok social-icon" aria-hidden="true"></i>
             </a>
         </div>
-        <div class="footer-page">
-            <p class="text">
-                © 2026 Universitario Japón. Todos los derechos reservados. Desarrollado por Mi@Tech System.
-            </p> 
-
-        </div>    
     </footer>
 
     <!-- JS — recorder.js primero, luego los scripts legacy si existen -->

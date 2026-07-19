@@ -1,5 +1,5 @@
 // ============================================
-// MI@TECH v4.0 — js/recorder.js
+// MI@TECH v5.0 — js/recorder.js
 // Flujo alumno: Home → Login → Instructions
 //              → Consentimiento → Grabación → Envío → Confirmación
 //
@@ -139,10 +139,10 @@ function initLogin() {
         <div class="form-group">
             <label for="login-cedula" class="form-label">ID number (cédula) *</label>
             <input type="password" id="login-cedula" class="form-input"
-                   placeholder="Enter your ID number" required autocomplete="current-password">
+                   placeholder="Enter your ID number" required autocomplete="current-password">     
         </div>
         <div id="login-error" class="error-message" style="color:#c0392b;font-size:14px;margin-bottom:12px;display:none;"></div>
-        <button type="submit" class="btn-primary" style="width:100%;margin-top:20px;">
+        <button type="submit" class="btn-primary" style="width:100%;margin-top:5px;">
             ▶️ Continue
         </button>
     `;
@@ -210,7 +210,7 @@ function initInstructions() {
 // POST /api/consentimiento
 // Ahora se muestra DESPUÉS de Instructions
 // ============================================
-const TEXTO_CONSENTIMIENTO_VERSION = 'v4.0-2026';
+const TEXTO_CONSENTIMIENTO_VERSION = 'v5.0-2026';
 const TEXTO_CONSENTIMIENTO = `
 By proceeding with this assessment, you consent to the following:
 
