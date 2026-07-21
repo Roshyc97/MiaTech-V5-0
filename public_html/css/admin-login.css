@@ -50,8 +50,9 @@ html, body {
 .login-card {
     width: 100%;
     max-width: 400px;
-    background: #1e112a;
+    background: #1e112a26;
     border-radius: var(--radius);
+    border: 1px solid yellow;
     box-shadow: var(--shadow);
     padding: 40px;
     animation: slideUp 0.3s ease-out;
@@ -120,7 +121,7 @@ form {
 }
 
 .form-group input::placeholder {
-    color: #d1d5db;
+    color: #4e545d;
 }
 
 .form-group input:invalid {

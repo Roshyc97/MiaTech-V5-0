@@ -21,10 +21,13 @@ if (($u['tipo'] ?? '') !== 'estudiante') {
     Response::error('Solo estudiantes pueden enviar evaluaciones', 403);
 }
 
-// Periodo activo
-$periodoNombre = \config('app.periodo_academico');
-$periodo = Database::get('SELECT id FROM periodos WHERE periodo = ?', [$periodoNombre]);
-$periodoId = $periodo['id'] ?? null;
+// Periodo activo: OPCIÓN A — leer desde periodos.activo=1 (fuente única de verdad)
+$periodo = Database::get('SELECT id, periodo FROM periodos WHERE activo = 1 LIMIT 1');
+if (!$periodo) {
+    Response::error('No hay un periodo activo configurado', 503);
+}
+$periodoId = $periodo['id'];
+$periodoNombre = $periodo['periodo'];
 
 // Candado: 1 intento por alumno por periodo
 if ($periodoId) {
@@ -70,9 +73,14 @@ try {
         'confianza'     => $eval['confianza'],
     ]);
 
-    // 5) PDF profesor (con nota) -> almacenar; video -> almacenar
+    // 5) Generar AMBOS PDFs (profesor + alumno)
+    // PDF profesor: se almacena permanentemente (respaldo)
+    // PDF alumno: se sirve en memoria (descarga inmediata, se pierde si no descarga)
     $storage = StorageFactory::crear();
     $pdfProfBytes = Pdf::evaluacionProfesor($datos);
+    $pdfAlumBytes = Pdf::constanciaAlumno($datos);
+
+    // Almacenar SOLO PDF profesor
     $tmpPdf = $tmpDir . '/' . $usuario . '_profesor.pdf';
     file_put_contents($tmpPdf, $pdfProfBytes);
 
@@ -83,16 +91,44 @@ try {
     @unlink($tmpPdf);
 
     // 6) Registrar resultado + candado
+    // NOTA: justificacion y transcripcion NO se almacenan en BD
+    // Solo existen en el PDF profesor (storage/) como respaldo permanente
     Database::run(
         'INSERT INTO evaluaciones_rendidas
-         (estudiante_id, periodo_academico, nivel_seleccionado, resultado_cefr, justificacion, transcripcion, video_ref, reporte_ref, storage_driver)
-         VALUES (?,?,?,?,?,?,?,?,?)',
-        [$u['id'], $periodoNombre, 'auto', $eval['nivel_cefr'], $eval['justificacion'], $transcripcion, $videoKey, $pdfKey, $storage->nombre()]
+         (estudiante_id, periodo_academico, nivel_seleccionado, resultado_cefr, video_ref, reporte_ref, storage_driver)
+         VALUES (?,?,?,?,?,?,?)',
+        [$u['id'], $periodoNombre, 'auto', $eval['nivel_cefr'], $videoKey, $pdfKey, $storage->nombre()]
     );
+
+    // Actualizar estadísticas del período
+    $nivel = $eval['nivel_cefr'];
+    $colNivel = match($nivel) {
+        'A1' => 'nivel_a1',
+        'A2.1' => 'nivel_a2_1',
+        'A2.2' => 'nivel_a2_2',
+        'B1' => 'nivel_b1',
+        default => null
+    };
+    if ($colNivel) {
+        Database::run(
+            "UPDATE estadisticas_periodos SET
+                total_evaluaciones = total_evaluaciones + 1,
+                $colNivel = $colNivel + 1,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE periodo = ?",
+            [$periodoNombre]
+        );
+    }
+
     if ($periodoId) {
         Database::run(
             'INSERT INTO intentos_evaluacion (estudiante_id, periodo_id, resultado_cefr) VALUES (?,?,?)',
             [$u['id'], $periodoId, $eval['nivel_cefr']]
+        );
+        // CAMBIO 4: Incrementar caché de intentos en tabla estudiantes
+        Database::run(
+            'UPDATE estudiantes SET intentos_evaluacion_count = intentos_evaluacion_count + 1 WHERE id = ?',
+            [$u['id']]
         );
     }
 
@@ -106,7 +142,10 @@ try {
         . 'El resultado se ha enviado a tu instructor. Gracias por participar.</p>'
     );
 
-    // 8) Limpieza (audio y video temporales; el PDF del alumno no se almacena)
+    // 8) Almacenar PDF alumno en sesión (para descarga inmediata SOLO)
+    $_SESSION['pdf_alumno_descarga'] = $pdfAlumBytes;
+
+    // 9) Limpieza (audio y video temporales; el PDF del alumno no se almacena)
     @unlink($audio);
     @unlink($tmpVideo);
 

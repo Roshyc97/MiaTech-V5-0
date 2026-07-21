@@ -9,6 +9,7 @@
             background: linear-gradient(135deg, rgba(132, 94, 213, 0.15) 0%, rgba(132, 94, 213, 0.25) 100%);
             min-height: 100vh;
             overflow-y: auto;
+            display: grid;
         }
 
 
@@ -166,7 +167,7 @@
     .main-container {
         display: grid;
         gap: 30px;
-        padding: 20px 10px;
+        padding: 00px 20px;
         max-width: 1400px;
         margin: 0 auto;
         align-items: flex-start;
@@ -180,8 +181,18 @@
 
    /* Mantener avatar y preview fijos para evitar solapamientos al hacer scroll */
     .animation-container {
+        background-color: transparent;
         padding: 0 10px;
         z-index: 1;
+    }
+
+    /* Ocultar avatar durante grabación */
+     .avatar-container.recording {
+        display: none;
+    }
+
+     .progress-container .home-section{
+        display: none;
     }
 
     .avatar-container {
@@ -224,14 +235,14 @@
     .work-area {
         display: grid;
         grid-template-columns: 30% auto;
-        background-color: var(--color-blanco);
+        /*background-color: var(--color-blanco);
         border: 5px solid var(--color-blanco);
-        border-radius: 15px;
+        border-radius: 15px;*/
         box-shadow: var(--box-shadow);
         padding: 10px 0px;
         overflow:auto;
         scrollbar-gutter: stable;
-        height: 450px;
+        /*height: 450px;*/
     }
 
 /* ============================================
@@ -243,7 +254,9 @@
         padding: 5px;
         display: grid;
         grid-auto-Flow: column;
-        position: static;
+        /*position: fixed;
+        bottom: 0;
+        width: 100%;*/
         justify-content: space-around;
         
     }
@@ -297,6 +310,7 @@
 
    .section-area{
         background: white;
+        padding: 20px 0px;
         overflow: auto;
    }
 
@@ -388,7 +402,10 @@
 
     .platform-controls div {
         flex: 1;
-        min-width: 200px;
+        width: clam(100px; 150px, 200px);
+        height: auto;
+        margin: 0 auto 10px;
+        background:#e0dff5;
         border: 1px solid #ddd;
         border-radius: 10px;
         padding: 16px;
@@ -1142,8 +1159,6 @@
         }
         
         .avatar-container {
-            /*flex: 0 0 auto;
-            width: 150px;*/
             margin: 0 auto 20px;
             position: static;
         }

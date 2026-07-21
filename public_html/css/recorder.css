@@ -219,8 +219,8 @@
     align-items: flex-start;
     margin: 20px 0;
     position: sticky;
-    top: 160px; /* sitúa el preview debajo del avatar */
-    z-index: 999; /* menor que avatar para que no lo tape */
+    top: 160px; 
+    z-index: 999;
 }
 
 .selected-image-container {

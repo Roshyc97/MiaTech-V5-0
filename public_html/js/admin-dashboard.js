@@ -92,9 +92,11 @@ function generateMenu(rol) {
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
             { id: 'estudiantes', label: 'Students', icon: '👥' },
             { id: 'periodos', label: 'Periods', icon: '📅' },
+            { id: 'importaciones', label: 'Import History', icon: '📥' },
             { id: 'docentes', label: 'Teachers', icon: '👨‍🏫' },
             { id: 'administradores', label: 'Administrators', icon: '🔑' },
             { id: 'evaluaciones', label: 'Evaluations', icon: '📋' },
+            { id: 'estadisticas-periodos', label: 'Period Statistics', icon: '📈' },
             { id: 'config', label: 'Configuration', icon: '⚙️' },
             { id: 'audit', label: 'Audit Log', icon: '📝' }
         ],
@@ -102,8 +104,10 @@ function generateMenu(rol) {
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
             { id: 'estudiantes', label: 'Students', icon: '👥' },
             { id: 'periodos', label: 'Periods', icon: '📅' },
+            { id: 'importaciones', label: 'Import History', icon: '📥' },
             { id: 'docentes', label: 'Teachers', icon: '👨‍🏫' },
-            { id: 'evaluaciones', label: 'Evaluations', icon: '📋' }
+            { id: 'evaluaciones', label: 'Evaluations', icon: '📋' },
+            { id: 'estadisticas-periodos', label: 'Period Statistics', icon: '📈' }
         ],
         'docente': [
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -233,6 +237,7 @@ function getContentForSection(section, rol) {
                                 <th>ID</th>
                                 <th>Period</th>
                                 <th>Attempt</th>
+                                <th>Consent</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -624,6 +629,34 @@ function getContentForSection(section, rol) {
             <!-- Toast Container -->
             <div id="toastContainer"></div>
         `,
+        'estadisticas-periodos': `
+            <div class="section-header">
+                <h2>Period Statistics</h2>
+                <p style="margin: 5px 0 15px; font-size: 13px; color: var(--text-secondary);">
+                    Permanent historical record of evaluation results by academic period
+                </p>
+            </div>
+            <div id="estadisticas-periodos-container">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>Loading period statistics...</p>
+                </div>
+            </div>
+        `,
+        'importaciones': `
+            <div class="section-header">
+                <h2>Student Imports History</h2>
+                <p style="margin: 5px 0 15px; font-size: 13px; color: var(--text-secondary);">
+                    Record of bulk student imports and enrollment statistics
+                </p>
+            </div>
+            <div id="importaciones-container">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>Loading import history...</p>
+                </div>
+            </div>
+        `,
         'config': `
             <div class="section-header">
                 <h2>Configuration</h2>
@@ -743,6 +776,16 @@ function initSectionScripts(section, rol) {
         case 'administradores':
             if (typeof initAdministradoresSection === 'function') {
                 initAdministradoresSection();
+            }
+            break;
+        case 'estadisticas-periodos':
+            if (typeof EstadisticasPeriodicasFrontend !== 'undefined') {
+                estadisticasApp = new EstadisticasPeriodicasFrontend();
+            }
+            break;
+        case 'importaciones':
+            if (typeof ImportacionesFrontend !== 'undefined') {
+                importacionesApp = new ImportacionesFrontend();
             }
             break;
         // ... más casos

@@ -11,7 +11,7 @@ if ($correo === '' || $password === '') {
 }
 $ip = Request::ip();
 $ua = Request::userAgent();
-MiaTech\RateLimit::comprobar("login", 12, 300);
+MiaTech\RateLimit::comprobar("login", 5, 300);
 
 // 1) Administradores (roles): bcrypt
 $admin = Database::get(
@@ -55,14 +55,40 @@ if ((int) $est['activo'] !== 1) {
     $registrar((int) $est['id'], 0);
     Response::error('Cuenta deshabilitada', 403);
 }
-$cfg = Database::get('SELECT fecha_max FROM configuracion LIMIT 1');
-if ($cfg && !empty($cfg['fecha_max']) && time() > strtotime($cfg['fecha_max'] . ' 23:59:59')) {
+// VALIDACIÓN: Período activo existe y no ha cerrado (fecha_fin)
+$periodo_activo = Database::get(
+    'SELECT id, fecha_fin FROM periodos WHERE activo = 1 LIMIT 1'
+);
+if (!$periodo_activo) {
+    $registrar((int) $est['id'], 0);
+    Response::error('No hay un periodo activo configurado', 503);
+}
+// Validar que la fecha_fin no haya pasado
+if (!empty($periodo_activo['fecha_fin']) && time() > strtotime($periodo_activo['fecha_fin'] . ' 23:59:59')) {
     $registrar((int) $est['id'], 0);
     Response::error('El periodo de evaluacion ha cerrado', 403);
 }
+
+// Validar longitud de cédula: exactamente 10 caracteres
+if (strlen($password) !== 10) {
+    $registrar((int) $est['id'], 0);
+    Response::error('Credenciales incorrectas', 401);
+}
+// Validar que la cédula coincida (texto plano)
 if ((string) $est['cedula'] !== trim($password)) {
     $registrar((int) $est['id'], 0);
     Response::error('Credenciales incorrectas', 401);
+}
+// Verificar que NO haya completado evaluación en período activo
+if ($periodo_activo) {
+    $ya_intento = Database::get(
+        'SELECT id FROM intentos_evaluacion WHERE estudiante_id = ? AND periodo_id = ?',
+        [$est['id'], $periodo_activo['id']]
+    );
+    if ($ya_intento) {
+        $registrar((int) $est['id'], 0);
+        Response::error('You have already completed your evaluation for this period.', 403);
+    }
 }
 $registrar((int) $est['id'], 1);
 Auth::login([

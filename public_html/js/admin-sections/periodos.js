@@ -60,15 +60,20 @@ function renderTablaPeriodos(data) {
     tbody.innerHTML = periodosCache.map(per => {
         const inicio = new Date(per.fecha_inicio).toLocaleDateString('es-ES');
         const fin = new Date(per.fecha_fin).toLocaleDateString('es-ES');
+        // OPCIÓN A: Badge clickeable para cambiar estado (toggle activo/inactivo)
+        // onclick SIEMPRE presente; la función valida si está activo
+        const badgeCursor = per.activo ? 'not-allowed' : 'pointer';
+        const badgeOpacity = per.activo ? '0.7' : '1';
+        const badgeTitle = per.activo ? 'Active period: cannot be toggled. Activate another period first.' : 'Click to activate this period';
         return `
-            <tr onclick="loadEvaluacionesPeriodo(${per.id}, '${per.periodo}')" style="cursor: pointer;">
-                <td><strong>${per.periodo}</strong></td>
+            <tr>
+                <td style="cursor: pointer;" onclick="loadEvaluacionesPeriodo(${per.id}, '${per.periodo}')"><strong>${per.periodo}</strong></td>
                 <td>${inicio}</td>
                 <td>${fin}</td>
-                <td><span class="badge ${per.activo ? 'badge-active' : 'badge-inactive'}">${per.activo ? 'Active' : 'Inactive'}</span></td>
+                <td><span class="badge ${per.activo ? 'badge-active' : 'badge-inactive'}" style="cursor: ${badgeCursor}; opacity: ${badgeOpacity};" title="${badgeTitle}" onclick="togglePeriodoActivo(event, ${per.id}, '${per.periodo}')">${per.activo ? 'Active' : 'Inactive'}</span></td>
                 <td class="actions" onclick="event.stopPropagation();">
-                    <button class="btn-icon btn-edit" onclick="openEditModalPeriodos(${per.id})">✏️</button>
-                    <button class="btn-icon btn-delete" onclick="confirmDeletePeriodos(${per.id}, '${per.periodo}')">🗑️</button>
+                    <button class="btn-icon btn-edit" onclick="openEditModalPeriodos(${per.id})" ${per.activo ? 'disabled title="Cannot edit active period"' : ''}>${per.activo ? '🔒' : '✏️'}</button>
+                    <button class="btn-icon btn-delete" onclick="confirmDeletePeriodos(${per.id}, '${per.periodo}')" ${per.activo ? 'disabled title="Cannot delete active period"' : ''}>${per.activo ? '🔒' : '🗑️'}</button>
                 </td>
             </tr>
         `;
@@ -93,13 +98,66 @@ async function handleFilterChangePeriodos(event) {
     await loadPeriodos(1);
 }
 
+// OPCIÓN A: Toggle de activo/inactivo directamente desde la tabla
+// Permite activar un período (desactivando otros) sin abrir modal
+async function togglePeriodoActivo(event, periodoId, periodoNombre) {
+    event.stopPropagation();
+
+    const periodo = periodosCache.find(p => p.id === periodoId);
+    if (!periodo) return;
+
+    // Si ya está activo, no hacer nada (botón deshabilitado)
+    if (periodo.activo) {
+        showToastPeriodos('This period is already active', 'info');
+        return;
+    }
+
+    // Mostrar confirmación (desactivará otros períodos)
+    const otrosActivos = periodosCache.filter(p => p.activo);
+    let mensaje = `Activate period ${periodoNombre}?`;
+    if (otrosActivos.length > 0) {
+        mensaje += `\n\nThis will deactivate: ${otrosActivos.map(p => p.periodo).join(', ')}`;
+    }
+
+    if (!confirm(mensaje)) return;
+
+    try {
+        // Enviar PUT con activo=1 (backend desactivará otros automáticamente)
+        const response = await fetch(`/api/admin/periodos/${periodoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                periodo: periodo.periodo,
+                fecha_inicio: periodo.fecha_inicio,
+                fecha_fin: periodo.fecha_fin,
+                activo: 1  // Activar este período
+            }),
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            showToastPeriodos(data.error || 'Error activating period', 'error');
+            return;
+        }
+
+        showToastPeriodos(`Period ${periodoNombre} activated successfully`, 'success');
+        await loadPeriodos(paginaActual);
+    } catch (error) {
+        console.error('[Periodos] Toggle error:', error);
+        showToastPeriodos('Error activating period: ' + error.message, 'error');
+    }
+}
+
 function openCreateModalPeriodos() {
     editandoId = null;
     document.getElementById('modalTitleEditPeriodo').textContent = 'Create New Period';
     document.getElementById('periodoEditPeriodo').value = '';
     document.getElementById('fechaInicioEditPeriodo').value = '';
     document.getElementById('fechaFinEditPeriodo').value = '';
-    document.getElementById('statusEditPeriodo').value = '1';
+    // OPCIÓN A: Nuevos períodos por defecto INactivos (activo=0)
+    // Se activan haciendo clic en el badge después de crear
+    document.getElementById('statusEditPeriodo').value = '0';
     document.getElementById('modalEditarPeriodo').style.display = 'flex';
     clearEditErrorsPeriodos();
 }
@@ -110,6 +168,12 @@ async function openEditModalPeriodos(idPeriodoEdit) {
         const periodo = periodosCache.find(p => parseInt(p.id) === idNumericoPeriodo);
         console.log('[EditModal] Buscando período con ID:', idNumericoPeriodo, 'Encontrado:', periodo);
         if (!periodo) { showToastPeriodos('Period not found', 'error'); return; }
+
+        // OPCIÓN A: NO permitir editar período activo
+        if (periodo.activo) {
+            showToastPeriodos('Cannot edit active period. Activate another period first.', 'error');
+            return;
+        }
 
         editandoId = parseInt(periodo.id);
         console.log('[EditModal] editandoId asignado a:', editandoId);
@@ -190,6 +254,13 @@ async function savePeriodo(periodo, fechaInicio, fechaFin, activo) {
 }
 
 function confirmDeletePeriodos(id, periodo) {
+    // OPCIÓN A: NO permitir borrar período activo
+    const periodoObj = periodosCache.find(p => p.id === id);
+    if (periodoObj && periodoObj.activo) {
+        showToastPeriodos('Cannot delete active period. Activate another period first.', 'error');
+        return;
+    }
+
     if (confirm(`Are you sure you want to delete "${periodo}"?`)) deletePeriodo(id);
 }
 
@@ -292,4 +363,5 @@ function showToastPeriodos(message, type = 'info') {
     window.closeEditModalPeriodos = closeEditModalPeriodos;
     window.handleSavePeriodo = handleSavePeriodo;
     window.loadEvaluacionesPeriodo = loadEvaluacionesPeriodo;
+    window.togglePeriodoActivo = togglePeriodoActivo;  // OPCIÓN A: Exponer función
 })();

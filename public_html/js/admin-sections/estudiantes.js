@@ -87,6 +87,7 @@ function renderTablaEstudiantes(data) {
             <td>${est.cedula}</td>
             <td><strong>${est.periodo || 'Sin asignar'}</strong></td>
             <td style="text-align: center;">${est.intentos_count > 0 ? 'Si' : 'No'}</td>
+            <td style="text-align: center;">${est.consentimiento === 'si' ? 'Si' : 'No'}</td>
             <td><span class="badge ${est.activo ? 'badge-active' : 'badge-inactive'}" style="cursor: pointer;" onclick="toggleEstadoEstudiante(${est.id}, ${est.activo ? 0 : 1})">${est.activo ? 'Active' : 'Inactive'}</span></td>
             <td class="actions">
                 <button class="btn-icon btn-edit" onclick="openEditModalEstudiantes(${est.id})" title="Edit">✏️</button>

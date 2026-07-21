@@ -29,10 +29,10 @@ async function cargarConfiguracion() {
         if (res.ok) {
             const data = await res.json();
             CONFIG = { ...CONFIG, ...data };
-            console.log('✅ Configuración cargada desde .env:', CONFIG);
+            console.log('✅ CConfiguration loaded from .env:', CONFIG);
         }
     } catch (err) {
-        console.warn('⚠️ Usando configuración por defecto:', err.message);
+        console.warn('⚠️ Using default settings:', err.message);
     }
 }
 
@@ -118,7 +118,31 @@ function mostrarError(titulo, mensaje) {
 function initHome() {
     const btn = $('btn-begin-assessment');
     if (btn) {
-        btn.onclick = () => mostrarSeccion('student-info-section');
+        btn.onclick = () => {
+            // Bloquear botón
+            btn.disabled = true;
+
+            // Activar animación del avatar (cambiar a GIF)
+            const avatarImg = $('miatech-gif');
+            if (avatarImg) {
+                avatarImg.src = avatarImg.getAttribute('data-animated') || 'img/MiaTechv.gif';
+            }
+
+            // Reproducir audio de saludo
+            const audioSaludo = new Audio('audio/Saludo.mp3');
+            audioSaludo.play();
+
+            // Esperar 10 segundos y luego cambiar de sección
+            setTimeout(() => {
+                mostrarSeccion('student-info-section');
+                // Rehabilitar botón (por si usuario vuelve)
+                btn.disabled = false;
+                // Restaurar avatar a imagen estática
+                if (avatarImg) {
+                    avatarImg.src = avatarImg.getAttribute('data-static') || 'img/miaTech_of.png';
+                }
+            }, 10000);
+        };
     }
 }
 
@@ -153,6 +177,13 @@ function initLogin() {
         const cedula  = $('login-cedula').value.trim();
         const errEl   = $('login-error');
         errEl.style.display = 'none';
+
+        // Validación cliente: cédula exactamente 10 caracteres
+        if (cedula.length !== 10) {
+            errEl.textContent   = 'ID number must be exactly 10 digits.';
+            errEl.style.display = 'block';
+            return;
+        }
 
         mostrarSpinner('Verifying...');
         try {
@@ -362,7 +393,7 @@ async function iniciarSeccionGrabacion() {
 async function solicitarPermisosMedia() {
     const micBtn = $('mic-button');
     try {
-        console.log('[recorder] Solicitando permisos: pantalla + micrófono + cámara');
+        console.log('[recorder] Requesting permissions: screen + microphone + camera');
 
         // 1. Solicitar PANTALLA (video de lo que se ve en navegador - esta pestaña automáticamente)
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -394,7 +425,7 @@ async function solicitarPermisosMedia() {
             ...audioStream.getAudioTracks()     // Audio: micrófono
         ]);
 
-        console.log('[recorder] ✅ Pantalla + micrófono + cámara listos');
+        console.log('[recorder] ✅ Screen, microphone, and camera ready.');
 
         // Mostrar preview de CÁMARA en miniatura
         _mostrarCameraPreview(cameraStream);
@@ -408,11 +439,11 @@ async function solicitarPermisosMedia() {
     } catch (err) {
         if (micBtn) micBtn.disabled = true;
 
-        let mensaje = 'Error al preparar la grabación. ';
+        let mensaje = 'Error preparing the recording.';
         if (err.name === 'NotAllowedError') {
-            mensaje = 'Debes permitir acceso a pantalla, micrófono y cámara para continuar.';
+            mensaje = 'You must allow access to the screen, microphone, and camera to continue.';
         } else if (err.name === 'NotFoundError') {
-            mensaje = 'No se encontró pantalla o cámara. Verifica que tengas estos dispositivos disponibles.';
+            mensaje = 'No screen or camera was found. Check that you have these devices available.';
         } else {
             mensaje += err.message;
         }
@@ -513,16 +544,23 @@ async function iniciarGrabacion() {
     try {
         let stream = State.streamPreview;
         if (!stream || stream.getTracks().some(t => t.readyState === 'ended')) {
-            throw new Error('Compartir pantalla fue cancelado. Por favor, intenta de nuevo.');
+            throw new Error('Screen sharing was cancelled. Please try again.');
         }
+
+        // Agregar clase "recording" para ocultar solo avatar-container
+        const avatarContainer = $('avatar-container');
+        if (avatarContainer) avatarContainer.classList.add('recording');
 
         // Mostrar imagen AHORA (después de presionar mic-button)
         const imgEl = $('selected-level-image');
-        if (imgEl && State.imagenSrc) imgEl.src = State.imagenSrc;
+        if (imgEl && State.imagenSrc) {
+            imgEl.src = State.imagenSrc;
+            imgEl.style.display = 'block';
+        }
 
         // ✅ GRABAR STREAM COMPLETO (pantalla + audio micrófono)
         if (stream.getAudioTracks().length === 0) {
-            throw new Error('No se detectó audio del micrófono. Por favor, verifica los permisos.');
+            throw new Error('No microphone audio was detected. Please check the permissions.');
         }
 
         const mimeType = seleccionarMimeType();
@@ -546,10 +584,10 @@ async function iniciarGrabacion() {
         const screenTracks = stream.getVideoTracks();
         if (screenTracks.length > 0) {
             screenTracks[0].onended = () => {
-                console.log('[recorder] ⚠️ Pantalla compartida se cerró');
+                console.log('[recorder] ⚠️ Screen sharing ended.');
                 if (State.grabando) {
                     detenerGrabacion();
-                    mostrarAvisoCorto('La pantalla compartida se cerró. Grabación detenida.');
+                    mostrarAvisoCorto('Screen sharing ended. Recording stopped.');
                 }
             };
         }
@@ -591,6 +629,20 @@ function detenerGrabacion() {
     }
     if (State.speechRecognition) {
         try { State.speechRecognition.stop(); } catch {}
+    }
+
+    // Parar streams para detener visualización de cámara
+    if (State.streamPreview) {
+        State.streamPreview.getTracks().forEach(t => t.stop());
+    }
+    if (State.cameraStream) {
+        State.cameraStream.getTracks().forEach(t => t.stop());
+    }
+
+    // Limpiar elemento de video
+    const videoEl = $('camera-preview');
+    if (videoEl) {
+        videoEl.srcObject = null;
     }
 }
 
@@ -700,8 +752,11 @@ async function confirmRerecord() {
         console.warn('Error loading new image:', err.message);
     }
 
-    // Actualizar imagen en pantalla
+    // Ocultar imagen durante reset
     const imgEl = $('selected-level-image');
+    if (imgEl) imgEl.style.display = 'none';
+
+    // Actualizar imagen en pantalla (pero mantener oculta hasta iniciar grabación)
     if (imgEl && State.imagenSrc) imgEl.src = State.imagenSrc;
 
     // Resetear estado de grabación
@@ -711,8 +766,8 @@ async function confirmRerecord() {
     const micBtn = $('mic-button');
     if (micBtn) micBtn.disabled = false;
 
-    // Mantener preview de cámara
-    if (State.streamPreview) _mostrarCameraPreview(State.streamPreview);
+    // ✅ REQUERIR PERMISOS DE MEDIA NUEVAMENTE (los streams anteriores están cerrados)
+    await solicitarPermisosMedia();
 
     console.log('🔄 Re-recording initiated (one-time). New image assigned.');
 }
@@ -846,12 +901,19 @@ function mostrarConfirmacionEnvio() {
     if (State.cameraStream) {
         State.cameraStream.getTracks().forEach(t => {
             t.stop();
-            console.log(`[recorder] Deteniendo cámara: ${t.kind}`);
+            console.log(`[recorder] Stopping camera: ${t.kind}`);
         });
         State.cameraStream = null;
         const videoEl = $('camera-preview');
-        if (videoEl) videoEl.srcObject = null;
+        if (videoEl) {
+            videoEl.srcObject = null;
+            videoEl.style.display = 'none';
+        }
     }
+
+    // Remover clase "recording" para mostrar avatar-container nuevamente
+    const avatarContainer = $('avatar-container');
+    if (avatarContainer) avatarContainer.classList.remove('recording');
 
     // Mostrar botón de descarga PDF si hay URL disponible
     const btnPdf = $('btn-download-pdf');

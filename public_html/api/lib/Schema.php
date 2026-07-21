@@ -31,6 +31,7 @@ class Schema
         )$ENG";
 
         // cedula = clave de acceso del alumno (texto plano, visible en dashboard: por decision del usuario)
+        // intentos_evaluacion_count = caché de intentos totales (evita COUNT(*) en dashboard)
         $stmts[] = "CREATE TABLE IF NOT EXISTS estudiantes (
             id         $PK,
             correo     VARCHAR(255) NOT NULL UNIQUE,
@@ -38,7 +39,9 @@ class Schema
             apellido   VARCHAR(255),
             carrera    VARCHAR(255),
             cedula     VARCHAR(50)  NOT NULL,
+            periodo_id $INT,
             activo     $INT NOT NULL DEFAULT 1,
+            intentos_evaluacion_count $INT NOT NULL DEFAULT 0,
             created_at $NOW
         )$ENG";
 
@@ -72,8 +75,6 @@ class Schema
             periodo_academico  VARCHAR(50) NOT NULL,
             nivel_seleccionado VARCHAR(20) NOT NULL DEFAULT 'auto',
             resultado_cefr     VARCHAR(20) NOT NULL,
-            justificacion      TEXT,
-            transcripcion      TEXT,
             video_ref          VARCHAR(255),
             reporte_ref        VARCHAR(255),
             storage_driver     VARCHAR(20),
@@ -98,31 +99,28 @@ class Schema
             created_at   $NOW
         )$ENG";
 
-        $stmts[] = "CREATE TABLE IF NOT EXISTS docentes (
-            id           $PK,
-            correo       VARCHAR(255) NOT NULL UNIQUE,
-            nombre       VARCHAR(255) NOT NULL,
-            apellido     VARCHAR(255),
-            especialidad VARCHAR(255),
-            activo       $INT NOT NULL DEFAULT 1,
-            created_at   $NOW
+        // Estadísticas permanentes por período (snapshot de evaluaciones)
+        $stmts[] = "CREATE TABLE IF NOT EXISTS estadisticas_periodos (
+            id                  $PK,
+            periodo             VARCHAR(50) NOT NULL UNIQUE,
+            total_evaluaciones  $INT NOT NULL DEFAULT 0,
+            nivel_a1            $INT NOT NULL DEFAULT 0,
+            nivel_a2_1          $INT NOT NULL DEFAULT 0,
+            nivel_a2_2          $INT NOT NULL DEFAULT 0,
+            nivel_b1            $INT NOT NULL DEFAULT 0,
+            fecha_cierre        DATE,
+            created_at          $NOW,
+            updated_at          $NOW
         )$ENG";
 
-        $stmts[] = "CREATE TABLE IF NOT EXISTS estudiantes_periodos (
-            id            $PK,
-            estudiante_id $INT NOT NULL,
-            periodo_id    $INT NOT NULL,
-            asignado_en   $NOW,
-            UNIQUE (estudiante_id, periodo_id)
-        )$ENG";
+        // Tabla docentes eliminada: docentes ahora son administradores con rol='docente'
 
         $stmts[] = "CREATE TABLE IF NOT EXISTS intentos_evaluacion (
             id             $PK,
             estudiante_id  $INT NOT NULL,
             periodo_id     $INT NOT NULL,
             fecha_intento  $NOW,
-            resultado_cefr VARCHAR(20),
-            duracion_seg   $INT
+            resultado_cefr VARCHAR(20)
         )$ENG";
 
         $stmts[] = "CREATE TABLE IF NOT EXISTS importaciones (
@@ -134,20 +132,25 @@ class Schema
             fecha_importacion $NOW
         )$ENG";
 
+        $stmts[] = "CREATE TABLE IF NOT EXISTS rate_limit_attempts (
+            id            $PK,
+            bucket        VARCHAR(50)  NOT NULL,
+            ip_address    VARCHAR(64)  NOT NULL,
+            timestamp     $INT NOT NULL
+        )$ENG";
+
         foreach ($stmts as $sql) {
             $pdo->exec($sql);
         }
 
         // Fila unica de configuracion
+        // CAMBIO: Ya no insertamos periodo_academico ni fecha_max (ahora vienen de periodos.activo=1)
         $existe = (int) $pdo->query('SELECT COUNT(*) FROM configuracion')->fetchColumn();
         if ($existe === 0) {
             $st = $pdo->prepare(
-                'INSERT INTO configuracion (id, periodo_academico, fecha_max, storage_local_path)
-                 VALUES (1, ?, ?, ?)'
+                'INSERT INTO configuracion (id, storage_local_path) VALUES (1, ?)'
             );
             $st->execute([
-                \config('app.periodo_academico'),
-                '2026-12-31',
                 \config('storage.local_path'),
             ]);
         }

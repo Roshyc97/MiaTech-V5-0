@@ -40,6 +40,32 @@ if ($m === 'GET' && $sub === 'estadisticas') {
     ]);
 }
 
+// ============ ESTADISTICAS POR PERIODO (histórico permanente) ============
+if ($m === 'GET' && $sub === 'estadisticas-periodos') {
+    $stats = Database::all(
+        'SELECT periodo, total_evaluaciones, nivel_a1, nivel_a2_1, nivel_a2_2, nivel_b1, fecha_cierre, created_at
+         FROM estadisticas_periodos
+         ORDER BY fecha_cierre DESC, periodo DESC'
+    );
+    Response::ok(['estadisticas_periodos' => $stats]);
+}
+
+// ============ IMPORTACIONES (historial de importaciones masivas) ============
+if ($m === 'GET' && $sub === 'importaciones') {
+    $rol(['ti', 'coordinador']);
+    $importaciones = Database::all(
+        'SELECT i.id, i.nombre_grupo, i.cantidad,
+                p.periodo, p.fecha_inicio, p.fecha_fin,
+                a.nombre AS importado_por_nombre, a.correo,
+                i.fecha_importacion
+         FROM importaciones i
+         JOIN periodos p ON p.id = i.periodo_id
+         LEFT JOIN administradores a ON a.id = i.importado_por
+         ORDER BY i.fecha_importacion DESC'
+    );
+    Response::ok(['importaciones' => $importaciones]);
+}
+
 // ============ ESTUDIANTES ============
 if ($sub === 'estudiantes' && $m === 'GET') {
     // Paginacion + busqueda + filtro por estado (esperado por public_html/js/admin-sections/estudiantes.js)
@@ -68,8 +94,7 @@ if ($sub === 'estudiantes' && $m === 'GET') {
 
     $rows = Database::all(
         "SELECT e.id, e.correo, e.nombre, e.apellido, e.carrera, e.cedula, e.activo, e.created_at,
-            (SELECT p.periodo FROM estudiantes_periodos ep JOIN periodos p ON p.id = ep.periodo_id
-                WHERE ep.estudiante_id = e.id ORDER BY ep.id DESC LIMIT 1) AS periodo,
+            (SELECT p.periodo FROM periodos p WHERE p.id = e.periodo_id LIMIT 1) AS periodo,
             (SELECT COUNT(*) FROM consentimientos c WHERE c.identificador = e.correo AND c.acepto = 1) AS consintio,
             (SELECT er.resultado_cefr FROM evaluaciones_rendidas er WHERE er.estudiante_id = e.id
                 ORDER BY er.id DESC LIMIT 1) AS nivel,
@@ -108,12 +133,9 @@ if ($sub === 'estudiantes' && $m === 'POST') {
         Response::error('Ya existe un estudiante con ese correo', 409);
     }
     $id = Database::run(
-        'INSERT INTO estudiantes (correo, nombre, apellido, carrera, cedula, activo) VALUES (?,?,?,?,?,1)',
-        [$correo, $nombre, $apellido, $carrera, $cedula]
+        'INSERT INTO estudiantes (correo, nombre, apellido, carrera, cedula, periodo_id, activo) VALUES (?,?,?,?,?,?,1)',
+        [$correo, $nombre, $apellido, $carrera, $cedula, $periodoId ? (int) $periodoId : null]
     );
-    if ($periodoId) {
-        Database::run('INSERT INTO estudiantes_periodos (estudiante_id, periodo_id) VALUES (?,?)', [$id, (int) $periodoId]);
-    }
     Response::ok(['id' => $id], 201);
 }
 
@@ -121,7 +143,7 @@ if ($sub === 'estudiantes' && $m === 'POST') {
 if (preg_match('#^estudiantes/(\d+)/intentos$#', $sub, $mmIntentos) && $m === 'GET') {
     $idIntentos = (int) $mmIntentos[1];
     $listaIntentos = Database::all(
-        'SELECT fecha_intento, resultado_cefr, duracion_seg FROM intentos_evaluacion
+        'SELECT fecha_intento, resultado_cefr FROM intentos_evaluacion
          WHERE estudiante_id = ? ORDER BY fecha_intento DESC',
         [$idIntentos]
     );
@@ -132,20 +154,19 @@ if (preg_match('#^estudiantes/(\d+)$#', $sub, $mm)) {
     $id = (int) $mm[1];
     if ($m === 'GET') {
         $estudianteUno = Database::get(
-            'SELECT id, correo, nombre, apellido, carrera, cedula, activo, created_at FROM estudiantes WHERE id = ?',
+            'SELECT id, correo, nombre, apellido, carrera, cedula, periodo_id, activo, created_at FROM estudiantes WHERE id = ?',
             [$id]
         );
         if (!$estudianteUno) {
             Response::error('Estudiante no encontrado', 404);
         }
-        $periodoUno = Database::get(
-            'SELECT p.id, p.periodo FROM estudiantes_periodos ep JOIN periodos p ON p.id = ep.periodo_id
-             WHERE ep.estudiante_id = ? ORDER BY ep.id DESC LIMIT 1',
-            [$id]
-        );
+        $periodoUno = $estudianteUno['periodo_id'] ? Database::get(
+            'SELECT id, periodo FROM periodos WHERE id = ? LIMIT 1',
+            [$estudianteUno['periodo_id']]
+        ) : null;
         $estudianteUno['periodo'] = $periodoUno ?: null;
         $estudianteUno['intentos'] = Database::all(
-            'SELECT fecha_intento, resultado_cefr, duracion_seg FROM intentos_evaluacion
+            'SELECT fecha_intento, resultado_cefr FROM intentos_evaluacion
              WHERE estudiante_id = ? ORDER BY fecha_intento DESC',
             [$id]
         );
@@ -156,28 +177,24 @@ if (preg_match('#^estudiantes/(\d+)$#', $sub, $mm)) {
         if (!Database::get('SELECT id FROM estudiantes WHERE id = ?', [$id])) {
             Response::error('Estudiante no encontrado', 404);
         }
+        $periodoId = Request::input('periodo_id', null);
         Database::run(
-            'UPDATE estudiantes SET correo = ?, nombre = ?, apellido = ?, carrera = ?, cedula = ?, activo = ? WHERE id = ?',
+            'UPDATE estudiantes SET correo = ?, nombre = ?, apellido = ?, carrera = ?, cedula = ?, periodo_id = ?, activo = ? WHERE id = ?',
             [
                 strtolower(trim((string) Request::input('correo', ''))),
                 trim((string) Request::input('nombre', '')),
                 trim((string) Request::input('apellido', '')),
                 trim((string) Request::input('carrera', '')),
                 trim((string) Request::input('cedula', '')),
+                $periodoId ? (int) $periodoId : null,
                 (int) Request::input('activo', 1),
                 $id,
             ]
         );
-        $periodoId = Request::input('periodo_id', null);
-        if ($periodoId) {
-            Database::run('DELETE FROM estudiantes_periodos WHERE estudiante_id = ?', [$id]);
-            Database::run('INSERT INTO estudiantes_periodos (estudiante_id, periodo_id) VALUES (?,?)', [$id, (int) $periodoId]);
-        }
         Response::ok();
     }
     if ($m === 'DELETE') {
         $rol(['ti', 'coordinador']);
-        Database::run('DELETE FROM estudiantes_periodos WHERE estudiante_id = ?', [$id]);
         Database::run('DELETE FROM estudiantes WHERE id = ?', [$id]);
         Response::ok();
     }
@@ -192,6 +209,11 @@ if (preg_match('#^estudiantes/(\d+)/intentos$#', $sub, $mm) && $m === 'DELETE') 
     $rol(['ti', 'coordinador']);
     $idEstudiante = (int) $mm[1];
     Database::run('DELETE FROM intentos_evaluacion WHERE estudiante_id = ?', [$idEstudiante]);
+    // CAMBIO 4: Resetear caché de intentos a 0
+    Database::run(
+        'UPDATE estudiantes SET intentos_evaluacion_count = 0 WHERE id = ?',
+        [$idEstudiante]
+    );
     Response::ok();
 }
 
@@ -221,19 +243,19 @@ if (in_array($sub, ['estudiantes/importar', 'estudiantes/importar-masivo'], true
         $correo = strtolower(trim($d['correo'] ?? ''));
         if ($correo === '') continue;
         $totalFilasCsv++;
-        $eid = Database::get('SELECT id FROM estudiantes WHERE correo = ?', [$correo]);
+        $eid = Database::get('SELECT id, periodo_id FROM estudiantes WHERE correo = ?', [$correo]);
         if (!$eid) {
             $id = Database::run(
-                'INSERT INTO estudiantes (correo, nombre, apellido, carrera, cedula, activo) VALUES (?,?,?,?,?,1)',
-                [$correo, trim($d['nombre'] ?? ''), trim($d['apellido'] ?? ''), trim($d['carrera'] ?? ''), trim($d['cedula'] ?? '')]
+                'INSERT INTO estudiantes (correo, nombre, apellido, carrera, cedula, periodo_id, activo) VALUES (?,?,?,?,?,?,1)',
+                [$correo, trim($d['nombre'] ?? ''), trim($d['apellido'] ?? ''), trim($d['carrera'] ?? ''), trim($d['cedula'] ?? ''), (int) $periodoId]
             );
             $insertados++;
         } else {
             $id = (int) $eid['id'];
-        }
-        if (!Database::get('SELECT id FROM estudiantes_periodos WHERE estudiante_id = ? AND periodo_id = ?', [$id, $periodoId])) {
-            Database::run('INSERT INTO estudiantes_periodos (estudiante_id, periodo_id) VALUES (?,?)', [$id, $periodoId]);
-            $vinculados++;
+            if (!$eid['periodo_id']) {
+                Database::run('UPDATE estudiantes SET periodo_id = ? WHERE id = ?', [(int) $periodoId, $id]);
+                $vinculados++;
+            }
         }
     }
     fclose($fh);
@@ -245,6 +267,7 @@ if (in_array($sub, ['estudiantes/importar', 'estudiantes/importar-masivo'], true
 }
 
 // ============ DOCENTES ============
+// NOTA: Docentes son administradores con rol='docente' (no tabla separada)
 if ($sub === 'docentes' && $m === 'GET') {
     // Paginacion + busqueda + filtro por estado (esperado por public_html/js/admin-sections/docentes.js)
     $paginaDoc = max(1, (int) Request::input('page', 1));
@@ -252,7 +275,7 @@ if ($sub === 'docentes' && $m === 'GET') {
     $filtroDoc = (string) Request::input('filtro', 'todos'); // activos | inactivos | todos
     $buscarDoc = trim((string) Request::input('search', ''));
 
-    $condicionesDoc = [];
+    $condicionesDoc = ['rol = \'docente\''];
     $paramsDoc = [];
     if ($filtroDoc === 'activos') {
         $condicionesDoc[] = 'activo = 1';
@@ -264,13 +287,13 @@ if ($sub === 'docentes' && $m === 'GET') {
         $comodinDoc = '%' . $buscarDoc . '%';
         array_push($paramsDoc, $comodinDoc, $comodinDoc, $comodinDoc);
     }
-    $whereDoc = $condicionesDoc ? ('WHERE ' . implode(' AND ', $condicionesDoc)) : '';
+    $whereDoc = 'WHERE ' . implode(' AND ', $condicionesDoc);
 
-    $totalDoc = (int) (Database::get("SELECT COUNT(*) c FROM docentes $whereDoc", $paramsDoc)['c'] ?? 0);
+    $totalDoc = (int) (Database::get("SELECT COUNT(*) c FROM administradores $whereDoc", $paramsDoc)['c'] ?? 0);
     $offsetDoc = ($paginaDoc - 1) * $limiteDoc;
     $filasDoc = Database::all(
-        "SELECT id, correo, nombre, apellido, especialidad, activo, created_at
-         FROM docentes $whereDoc ORDER BY nombre LIMIT $limiteDoc OFFSET $offsetDoc",
+        "SELECT id, correo, nombre, apellido, activo, created_at
+         FROM administradores $whereDoc ORDER BY nombre LIMIT $limiteDoc OFFSET $offsetDoc",
         $paramsDoc
     );
     Response::ok(['docentes' => $filasDoc, 'total' => $totalDoc, 'page' => $paginaDoc, 'limit' => $limiteDoc]);
@@ -281,12 +304,13 @@ if ($sub === 'docentes' && $m === 'POST') {
     if ($correo === '' || trim((string) Request::input('nombre', '')) === '') {
         Response::error('correo y nombre son requeridos', 400);
     }
-    if (Database::get('SELECT id FROM docentes WHERE correo = ?', [$correo])) {
-        Response::error('Ya existe un docente con ese correo', 409);
+    if (Database::get('SELECT id FROM administradores WHERE correo = ?', [$correo])) {
+        Response::error('Ya existe un usuario con ese correo', 409);
     }
+    $password = password_hash('TempPass123', PASSWORD_BCRYPT);
     $id = Database::run(
-        'INSERT INTO docentes (correo, nombre, apellido, especialidad, activo) VALUES (?,?,?,?,?)',
-        [$correo, trim((string) Request::input('nombre', '')), trim((string) Request::input('apellido', '')), trim((string) Request::input('especialidad', '')), (int) Request::input('activo', 1)]
+        'INSERT INTO administradores (correo, password_hash, nombre, apellido, rol, activo, must_change_password) VALUES (?,?,?,?,?,?,?)',
+        [$correo, $password, trim((string) Request::input('nombre', '')), trim((string) Request::input('apellido', '')), 'docente', (int) Request::input('activo', 1), 1]
     );
     Response::ok(['id' => $id], 201);
 }
@@ -295,14 +319,14 @@ if (preg_match('#^docentes/(\d+)$#', $sub, $mm)) {
     if ($m === 'PUT') {
         $rol(['ti']);
         Database::run(
-            'UPDATE docentes SET correo = ?, nombre = ?, apellido = ?, especialidad = ?, activo = ? WHERE id = ?',
-            [strtolower(trim((string) Request::input('correo', ''))), trim((string) Request::input('nombre', '')), trim((string) Request::input('apellido', '')), trim((string) Request::input('especialidad', '')), (int) Request::input('activo', 1), $id]
+            'UPDATE administradores SET correo = ?, nombre = ?, apellido = ?, activo = ? WHERE id = ? AND rol = \'docente\'',
+            [strtolower(trim((string) Request::input('correo', ''))), trim((string) Request::input('nombre', '')), trim((string) Request::input('apellido', '')), (int) Request::input('activo', 1), $id]
         );
         Response::ok();
     }
     if ($m === 'DELETE') {
         $rol(['ti']);
-        Database::run('DELETE FROM docentes WHERE id = ?', [$id]);
+        Database::run('DELETE FROM administradores WHERE id = ? AND rol = \'docente\'', [$id]);
         Response::ok();
     }
 }
@@ -357,13 +381,24 @@ if (preg_match('#^periodos/(\d+)/evaluaciones$#', $sub, $mmEval) && $m === 'GET'
 if ($sub === 'periodos' && $m === 'POST') {
     $rol(['ti', 'coordinador']);
     $periodo = trim((string) Request::input('periodo', ''));
+    $activoReq = (int) Request::input('activo', 0);
     if ($periodo === '') Response::error('periodo es requerido', 400);
     if (Database::get('SELECT id FROM periodos WHERE periodo = ?', [$periodo])) {
         Response::error('El periodo ya existe', 409);
     }
+    // OPCIÓN A: Si intenta activar nuevo período, desactivar otros primero
+    if ($activoReq === 1) {
+        Database::run('UPDATE periodos SET activo = 0 WHERE activo = 1');
+    }
     $id = Database::run(
         'INSERT INTO periodos (periodo, fecha_inicio, fecha_fin, activo) VALUES (?,?,?,?)',
-        [$periodo, (string) Request::input('fecha_inicio', ''), (string) Request::input('fecha_fin', ''), (int) Request::input('activo', 1)]
+        [$periodo, (string) Request::input('fecha_inicio', ''), (string) Request::input('fecha_fin', ''), $activoReq]
+    );
+    // Inicializar estadísticas del nuevo período
+    Database::run(
+        'INSERT INTO estadisticas_periodos (periodo, total_evaluaciones, nivel_a1, nivel_a2_1, nivel_a2_2, nivel_b1)
+         VALUES (?,0,0,0,0,0)',
+        [$periodo]
     );
     Response::ok(['id' => $id], 201);
 }
@@ -371,14 +406,76 @@ if (preg_match('#^periodos/(\d+)$#', $sub, $mm)) {
     $id = (int) $mm[1];
     if ($m === 'PUT') {
         $rol(['ti', 'coordinador']);
+        $periodoActual = Database::get('SELECT id, activo FROM periodos WHERE id = ?', [$id]);
+        if (!$periodoActual) {
+            Response::error('Periodo no encontrado', 404);
+        }
+        $activoReq = (int) Request::input('activo', $periodoActual['activo']);
+
+        // OPCIÓN A: No permitir editar período si está activo
+        if ((int) $periodoActual['activo'] === 1) {
+            Response::error('No se puede editar un periodo activo. Desactívalo primero.', 403);
+        }
+
+        // Si intenta activar, desactivar otros
+        if ($activoReq === 1 && (int) $periodoActual['activo'] === 0) {
+            Database::run('UPDATE periodos SET activo = 0 WHERE activo = 1');
+
+            // Marcar fecha cierre de período anterior para estadísticas
+            Database::run(
+                'UPDATE estadisticas_periodos SET fecha_cierre = CURRENT_DATE
+                 WHERE periodo IN (
+                     SELECT periodo FROM periodos WHERE activo = 0 AND fecha_cierre IS NULL
+                 )'
+            );
+
+            // LIMPIAR CONSENTIMIENTOS - nuevo período requiere nuevas autorizaciones
+            Database::run('DELETE FROM consentimientos');
+        }
+
         Database::run(
             'UPDATE periodos SET periodo = ?, fecha_inicio = ?, fecha_fin = ?, activo = ? WHERE id = ?',
-            [trim((string) Request::input('periodo', '')), (string) Request::input('fecha_inicio', ''), (string) Request::input('fecha_fin', ''), (int) Request::input('activo', 1), $id]
+            [trim((string) Request::input('periodo', '')), (string) Request::input('fecha_inicio', ''), (string) Request::input('fecha_fin', ''), $activoReq, $id]
         );
         Response::ok();
     }
     if ($m === 'DELETE') {
         $rol(['ti', 'coordinador']);
+        $periodoActual = Database::get('SELECT id, activo FROM periodos WHERE id = ?', [$id]);
+        if (!$periodoActual) {
+            Response::error('Periodo no encontrado', 404);
+        }
+
+        // OPCIÓN A: No permitir borrar período si está activo
+        if ((int) $periodoActual['activo'] === 1) {
+            Response::error('No se puede borrar un periodo activo. Desactívalo primero.', 403);
+        }
+
+        // Obtener datos del período para limpiezas relacionadas
+        $periodoDatos = Database::get('SELECT periodo FROM periodos WHERE id = ?', [$id]);
+
+        // LIMPIAR CONSENTIMIENTOS de estudiantes de este período
+        // (los consentimientos solo tienen valor mientras exista el período)
+        Database::run(
+            'DELETE FROM consentimientos
+             WHERE estudiante_id IN (
+                 SELECT DISTINCT id
+                 FROM estudiantes
+                 WHERE periodo_id = ?
+             )',
+            [$id]
+        );
+
+        // Limpiar evaluaciones del período
+        Database::run(
+            'DELETE FROM evaluaciones_rendidas WHERE periodo_academico = ?',
+            [$periodoDatos['periodo']]
+        );
+
+        // NOTA: estadisticas_periodos NO se elimina - es histórico permanente
+        // Las estadísticas se conservan indefinidamente como respaldo
+
+        // Finalmente, eliminar el período
         Database::run('DELETE FROM periodos WHERE id = ?', [$id]);
         Response::ok();
     }

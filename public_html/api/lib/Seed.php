@@ -29,9 +29,7 @@ class Seed
         ['docente.ingles@itsjapon.edu.ec',      'docente1234', 'Docente Ingles',                'docente'],
     ];
 
-    private const DOCENTES = [
-        ['docente.ingles@itsjapon.edu.ec', 'Docente', 'Ingles', 'Ingles'],
-    ];
+    // Docentes eliminados: ahora son administradores con rol='docente'
 
     private const PERIODOS = [
         ['2025A', '2025-01-01', '2025-06-30'],
@@ -42,7 +40,7 @@ class Seed
     public static function ejecutar(): array
     {
         $pdo = Database::conn();
-        $res = ['estudiantes' => 0, 'administradores' => 0, 'docentes' => 0, 'periodos' => 0];
+        $res = ['estudiantes' => 0, 'administradores' => 0, 'periodos' => 0];
 
         foreach (self::ESTUDIANTES as [$correo, $nombre, $apellido, $carrera, $cedula]) {
             if (!Database::get('SELECT id FROM estudiantes WHERE correo = ?', [$correo])) {
@@ -65,42 +63,27 @@ class Seed
             }
         }
 
-        foreach (self::DOCENTES as [$correo, $nombre, $apellido, $esp]) {
-            if (!Database::get('SELECT id FROM docentes WHERE correo = ?', [$correo])) {
-                Database::run(
-                    'INSERT INTO docentes (correo, nombre, apellido, especialidad) VALUES (?,?,?,?)',
-                    [$correo, $nombre, $apellido, $esp]
-                );
-                $res['docentes']++;
-            }
-        }
-
+        // OPCIÓN A: Solo activar el período actual (configuración), otros inactivos
+        $periodoActualConfig = \config('app.periodo_academico');
         foreach (self::PERIODOS as [$periodo, $ini, $fin]) {
             if (!Database::get('SELECT id FROM periodos WHERE periodo = ?', [$periodo])) {
+                $esActivo = ($periodo === $periodoActualConfig) ? 1 : 0;  // Solo UNO activo
                 Database::run(
-                    'INSERT INTO periodos (periodo, fecha_inicio, fecha_fin) VALUES (?,?,?)',
-                    [$periodo, $ini, $fin]
+                    'INSERT INTO periodos (periodo, fecha_inicio, fecha_fin, activo) VALUES (?,?,?,?)',
+                    [$periodo, $ini, $fin, $esActivo]
                 );
                 $res['periodos']++;
             }
         }
 
-        // Vincular todos los estudiantes al periodo activo (config)
+        // Asignar todos los estudiantes al periodo activo (config)
         $periodoActivo = \config('app.periodo_academico');
         $pRow = Database::get('SELECT id FROM periodos WHERE periodo = ?', [$periodoActivo]);
         if ($pRow) {
-            foreach (Database::all('SELECT id FROM estudiantes') as $e) {
-                $ya = Database::get(
-                    'SELECT id FROM estudiantes_periodos WHERE estudiante_id = ? AND periodo_id = ?',
-                    [$e['id'], $pRow['id']]
-                );
-                if (!$ya) {
-                    Database::run(
-                        'INSERT INTO estudiantes_periodos (estudiante_id, periodo_id) VALUES (?,?)',
-                        [$e['id'], $pRow['id']]
-                    );
-                }
-            }
+            Database::run(
+                'UPDATE estudiantes SET periodo_id = ? WHERE periodo_id IS NULL',
+                [$pRow['id']]
+            );
         }
 
         return $res;
