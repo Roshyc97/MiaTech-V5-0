@@ -1,0 +1,278 @@
+================================================================================
+                     ESTRUCTURA EN SITEGROUND
+                    institutoj20.sg-host.com
+================================================================================
+
+RAÍZ DEL SITIO (un nivel arriba de public_html):
+/home/customer/www/institutoj20.sg-host.com/
+
+CONTENIDO:
+
+/home/customer/www/institutoj20.sg-host.com/
+│
+├── .env                              ← ARCHIVO CRÍTICO
+│   ├── APP_ENV=production
+│   ├── DB_DRIVER=mysql
+│   ├── GROQ_API_KEY=gsk_... (SECRETO)
+│   └── SMTP_PASSWORD=... (SECRETO)
+│
+├── .env.local                        ← OPCIONAL (overrides)
+│
+├── public_html/                      ← WEB ROOT (accesible por HTTPS)
+│   ├── index.html
+│   ├── admin-login.html
+│   ├── admin-dashboard.html
+│   ├── recuperar.html
+│   ├── js/                           ← JavaScript frontend
+│   │   ├── app.js
+│   │   ├── dashboard.js
+│   │   ├── auth.js
+│   │   └── ...
+│   ├── css/                          ← Estilos
+│   │   ├── style.css
+│   │   ├── admin-dashboard.css
+│   │   └── ...
+│   ├── img/                          ← Imágenes
+│   │   ├── imagenes/                 ← Imágenes de prompt
+│   │   │   ├── image1.jpg
+│   │   │   ├── image2.jpg
+│   │   │   └── ... (subidas por usuario)
+│   │   └── ...
+│   ├── audio/                        ← Audio (voice over, etc.)
+│   └── api/                          ← BACKEND PHP (critical)
+│       ├── index.php                 ← Front controller / router
+│       ├── config.php                ← Carga .env (bloqueado por .htaccess)
+│       ├── bootstrap.php             ← Inicialización, headers, autoload
+│       ├── .htaccess                 ← Rewrite rules, headers seguridad
+│       ├── lib/                      ← Clases PHP (namespace MiaTech\)
+│       │   ├── Database.php          ← Conexión PDO (MySQL)
+│       │   ├── Response.php          ← Helpers JSON
+│       │   ├── Auth.php              ← Autenticación
+│       │   ├── Ffmpeg.php            ← Procesamiento de video
+│       │   ├── Groq.php              ← API GROQ (IA)
+│       │   ├── Mailer.php            ← SMTP (correos)
+│       │   ├── RateLimit.php         ← Límite de intentos
+│       │   ├── Pdf.php               ← Generador de PDF
+│       │   ├── Storage/              ← Capa de almacenamiento
+│       │   │   ├── StorageInterface.php
+│       │   │   ├── LocalStorage.php
+│       │   │   ├── OneDriveStorage.php
+│       │   │   └── StorageFactory.php
+│       │   └── Schema.php            ← Esquema BD (MySQL)
+│       └── routes/                   ← Handlers por endpoint
+│           ├── health.php
+│           ├── config.php
+│           ├── imagen.php
+│           ├── consentimiento.php
+│           ├── submission.php        ← UPLOAD VIDEO + EVALUACIÓN
+│           ├── submission_pdf.php    ← DESCARGA PDF
+│           ├── auth/
+│           │   ├── login.php
+│           │   ├── logout.php
+│           │   ├── me.php
+│           │   ├── change-password.php
+│           │   ├── forgot.php
+│           │   └── reset.php
+│           └── admin/
+│               └── dispatch.php      ← Router del dashboard
+│
+├── storage/                          ← FUERA DEL WEB ROOT (NO accesible por web)
+│   ├── 2025B/                        ← Período académico
+│   │   ├── videos/                   ← Videos subidos por alumnos
+│   │   │   ├── alumno1_2025b.mp4
+│   │   │   ├── alumno2_2025b.mp4
+│   │   │   └── ... (se generan con upload)
+│   │   ├── pdf/                      ← PDFs generados (reportes profesor)
+│   │   │   ├── alumno1_reporte.pdf
+│   │   │   ├── alumno2_reporte.pdf
+│   │   │   └── ... (se generan con evaluación)
+│   │   └── audio/                    ← Audio temporal (de ffmpeg)
+│   ├── 2026A/                        ← Próximo período (cuando se cree)
+│   │   ├── videos/
+│   │   ├── pdf/
+│   │   └── audio/
+│   ├── tmp/                          ← Temporales (se limpian con cron)
+│   │   ├── audio_extraction/         ← Audio extraído de video
+│   │   ├── ratelimit/                ← Archivos de rate limiting
+│   │   └── ... (se borran cada 2 horas)
+│   └── ...
+│
+├── tools/                            ← Scripts (accesibles por SSH, NO por web)
+│   ├── migrate.php                   ← Crea esquema BD + seed
+│   ├── seed.php                      ← Crea datos de prueba
+│   └── ...
+│
+├── docs/                             ← Documentación (opcional, NO crítica)
+│   ├── CHECKLIST_PRUEBAS.md
+│   ├── VARIABLES_FUNCIONAMIENTO.md
+│   ├── PROYECTO_CONTEXTO.md
+│   ├── DECISIONES_IMPORTANTES.md
+│   ├── PENDIENTES_PRODUCCION.md
+│   ├── DESPLIEGUE.md
+│   └── DUDAS_PENDIENTES.md
+│
+└── (otros)
+    ├── (NO .git/)
+    ├── (NO .env.local original)
+    ├── (NO db/miatech.sqlite)
+    └── (NO deploy/ carpeta)
+
+
+================================================================================
+                       COMPARACIÓN LOCAL vs SITEGROUND
+================================================================================
+
+LOCAL (tu PC):
+C:\...\MiaTech-v5-PHP\
+├── .env (desarrollo, GROQ_API_KEY test)
+├── .env.local (overrides locales)
+├── db/miatech.sqlite (SQLite)
+├── public_html/
+├── storage/
+├── tools/
+└── docs/
+
+SITEGROUND (servidor):
+/home/customer/www/institutoj20.sg-host.com/
+├── .env (producción, GROQ_API_KEY pago)
+├── public_html/
+├── storage/
+├── tools/
+└── docs/
+(NO db/, usa MySQL)
+(NO .env.local, no se sube)
+
+
+================================================================================
+                          ACCESO POR INTERNET
+================================================================================
+
+ACCESIBLE POR WEB (HTTPS):
+┌─ https://institutoj20.sg-host.com/
+│  └─ Carga /public_html/index.html
+│
+└─ https://institutoj20.sg-host.com/api/health
+   └─ Carga /public_html/api/index.php → routes/health.php
+
+NO ACCESIBLE POR WEB:
+┌─ https://institutoj20.sg-host.com/.env
+│  └─ BLOQUEADO (.htaccess + permisos 600)
+│
+├─ https://institutoj20.sg-host.com/storage/
+│  └─ BLOQUEADO (.htaccess + fuera de public_html)
+│
+├─ https://institutoj20.sg-host.com/tools/
+│  └─ BLOQUEADO (fuera de public_html)
+│
+└─ https://institutoj20.sg-host.com/docs/
+   └─ BLOQUEADO (fuera de public_html)
+
+
+================================================================================
+                            FLUJO DE DATOS
+================================================================================
+
+1. ALUMNO ACCEDE:
+   Browser → https://institutoj20.sg-host.com/
+            → /public_html/index.html (carga página)
+            → /public_html/js/app.js (JavaScript)
+            → /public_html/api/health (health check)
+
+2. ALUMNO GRABA VIDEO:
+   Browser → /api/submission (POST, multipart/form-data)
+            → /public_html/api/index.php (router)
+            → /public_html/api/routes/submission.php (handler)
+            → Guarda en /storage/2025B/videos/ (invisible al usuario)
+            → Extrae audio → /storage/tmp/audio/
+            → Envía a GROQ (API externa)
+            → GROQ devuelve transcripción + nivel CEFR
+            → Genera PDF → /storage/2025B/pdf/
+            → Retorna JSON con resultado
+
+3. PROFESOR DESCARGA REPORTE:
+   Browser → /api/submission/pdf/cavasconezp/profesor (GET)
+            → /public_html/api/routes/submission_pdf.php
+            → Lee PDF de /storage/2025B/pdf/
+            → Devuelve al navegador (descarga)
+   Archivo real: Invisible al usuario (fuera de web root)
+
+4. BASE DE DATOS (MySQL):
+   /public_html/api/lib/Database.php
+            → conexión a MySQL (DB_* de .env)
+            → Escribe evaluaciones, intentos, consentimientos, etc.
+            → Se backupea automáticamente en SiteGround
+
+
+================================================================================
+                           PERMISOS CRÍTICOS
+================================================================================
+
+.env:                                chmod 600  (rw-------)
+storage/                             chmod 755  (rwxr-xr-x)
+storage/2025B/                       chmod 755  (rwxr-xr-x)
+storage/2025B/videos/                chmod 755  (rwxr-xr-x)
+storage/2025B/pdf/                   chmod 755  (rwxr-xr-x)
+storage/tmp/                         chmod 755  (rwxr-xr-x)
+public_html/api/.htaccess            (heredado de public_html)
+
+
+================================================================================
+                             TAMAÑO ESTIMADO
+================================================================================
+
+Código PHP/HTML/CSS/JS:              ~500 KB
+Un video (5 min):                    ~50-100 MB
+Un PDF (reporte):                    ~100-200 KB
+Almacenamiento para 100 alumnos:     ~5-10 GB (videos) + 1 GB (PDFs)
+
+Recomendación: Monitorear storage/ y limpiar videos viejos regularmente
+
+
+================================================================================
+                              CRON JOBS ACTIVOS
+================================================================================
+
+Cada hora (0 * * * *):
+find /home/customer/www/institutoj20.sg-host.com/storage/tmp -type f -mmin +120 -delete
+→ Elimina archivos temporales mayores a 2 horas
+
+
+================================================================================
+                          REFERENCIAS DE RUTAS
+================================================================================
+
+En PHP, la raíz del proyecto se resuelve así:
+__DIR__ = /home/customer/www/institutoj20.sg-host.com/public_html/api
+dirname(__DIR__, 2) = /home/customer/www/institutoj20.sg-host.com
+
+Por eso:
+.env busca en: dirname(__DIR__, 2) . '/.env'
+             = /home/customer/www/institutoj20.sg-host.com/.env
+
+storage busca en: dirname(__DIR__, 2) . '/storage'
+                = /home/customer/www/institutoj20.sg-host.com/storage
+
+config.php (antes de ser ejecutado por web):
+require dirname(__DIR__, 2) . '/.env'
+
+
+================================================================================
+                         VERIFICACIÓN POST-DEPLOY
+================================================================================
+
+Por SSH:
+┌─ ls -la /home/customer/www/institutoj20.sg-host.com/
+│  Debe mostrar: .env, public_html/, storage/, tools/, docs/
+│
+├─ ls -la /home/customer/www/institutoj20.sg-host.com/.env
+│  Debe mostrar: -rw------- (permisos 600)
+│
+├─ mysql -u miatech_user -p
+│  > USE miatech_bd;
+│  > SHOW TABLES;
+│  Debe mostrar: 11 tablas
+│
+└─ curl https://institutoj20.sg-host.com/api/health
+   Debe devolver: { "ok": true, ... }
+
+================================================================================

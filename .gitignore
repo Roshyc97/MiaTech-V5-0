@@ -8,6 +8,8 @@
 .env
 .env.local
 .env.*.local
+deploy/siteground/.env.production
+.env.production
 
 # ============================================
 # Composer (si lo usas en futuro)

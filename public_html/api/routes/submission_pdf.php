@@ -22,8 +22,9 @@ $bytes = $_SESSION['pdf_alumno_descarga'];
 unset($_SESSION['pdf_alumno_descarga']);
 
 // Servir al navegador
+$usuario = explode('@', $u['correo'] ?? '')[0];
 header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="constancia_alumno.pdf"');
+header('Content-Disposition: attachment; filename="' . $usuario . '_constancia.pdf"');
 header('Content-Length: ' . strlen($bytes));
 echo $bytes;
 exit;

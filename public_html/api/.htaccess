@@ -1,7 +1,8 @@
 # public_html/api/.htaccess — enruta todo /api/* al front controller (index.php)
 
-# Evita que Apache resuelva /api/config -> config.php por content-negotiation
-# (MultiViews), lo que disparaba el FilesMatch de abajo y devolvia 403.
+# Evita que Apache resuelva /api/config -> settings.php por content-negotiation
+# (MultiViews). El cargador se renombro a settings.php para eliminar la colision
+# de nombre con la URL /api/config que provocaba el 403.
 Options -MultiViews
 
 <IfModule mod_rewrite.c>
@@ -18,7 +19,7 @@ Options -MultiViews
 </IfModule>
 
 # El unico punto de entrada es index.php: bloquear acceso directo a internos
-<FilesMatch "^(config|bootstrap)\.php$">
+<FilesMatch "^(settings|bootstrap)\.php$">
     Require all denied
 </FilesMatch>
 <FilesMatch "\.(env|sqlite|db|log)$">

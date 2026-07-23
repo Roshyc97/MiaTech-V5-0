@@ -22,7 +22,86 @@ document.addEventListener('DOMContentLoaded', function() {
             form.dispatchEvent(new Event('submit'));
         }
     });
+
+    // ---- Recuperacion de contrasena ----
+    const forgotLink = document.getElementById('forgotLink');
+    const recoveryForm = document.getElementById('recoveryForm');
+    const backToLogin = document.getElementById('backToLogin');
+    const forgotLinkWrap = document.getElementById('forgotLinkWrap');
+
+    if (forgotLink) {
+        forgotLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            form.style.display = 'none';
+            forgotLinkWrap.style.display = 'none';
+            hideError();
+            recoveryForm.style.display = 'block';
+            document.getElementById('recoveryEmail').focus();
+        });
+    }
+    if (backToLogin) {
+        backToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            recoveryForm.style.display = 'none';
+            document.getElementById('recoveryMessage').style.display = 'none';
+            form.style.display = 'block';
+            forgotLinkWrap.style.display = 'block';
+        });
+    }
+    if (recoveryForm) {
+        recoveryForm.addEventListener('submit', handleRecovery);
+    }
 });
+
+/**
+ * Manejar solicitud de recuperacion de contrasena (contrasena temporal por correo)
+ */
+async function handleRecovery(event) {
+    event.preventDefault();
+    const correo = document.getElementById('recoveryEmail').value.trim();
+    const btn = document.getElementById('recoveryBtn');
+    const msg = document.getElementById('recoveryMessage');
+
+    if (!correo) {
+        showRecoveryMessage('Please enter your account email.', false);
+        return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    try {
+        const response = await fetch('/api/auth/forgot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo: correo }),
+            credentials: 'include'
+        });
+        const data = await response.json();
+        // Mensaje generico siempre (no revela si el correo existe)
+        showRecoveryMessage(
+            data.mensaje || 'If the email belongs to a registered role, a temporary password has been sent.',
+            true
+        );
+    } catch (error) {
+        console.error('[Recovery] Error:', error);
+        showRecoveryMessage('Connection error. Please try again.', false);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send temporary password';
+    }
+}
+
+/**
+ * Mostrar mensaje del flujo de recuperacion
+ */
+function showRecoveryMessage(text, ok) {
+    const msg = document.getElementById('recoveryMessage');
+    msg.textContent = text;
+    msg.style.display = 'block';
+    msg.style.background = ok ? '#ecfdf5' : '#fef2f2';
+    msg.style.color = ok ? '#065f46' : '#991b1b';
+    msg.style.border = '1px solid ' + (ok ? '#a7f3d0' : '#fecaca');
+}
 
 /**
  * Manejar login de admin

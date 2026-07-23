@@ -154,15 +154,15 @@ class Pdf
     public static function constanciaAlumno(array $d): string
     {
         $p = new self();
-        $p->titulo('Mi@Tech - Constancia de Evaluacion Oral')
-          ->parrafo('Instituto Tecnologico Superior Japon - Centro de Idiomas')
+        $p->titulo('Mi@Tech - Oral Assessment Certificate')
+          ->parrafo('Instituto Tecnologico Superior Japon - Language Center')
           ->separador()
-          ->subtitulo('Datos del estudiante')
-          ->campo('Nombre', trim(($d['nombre'] ?? '') . ' ' . ($d['apellido'] ?? '')))
-          ->campo('Correo', $d['correo'] ?? '')
-          ->campo('Carrera', $d['carrera'] ?? '')
-          ->campo('Periodo', $d['periodo'] ?? '')
-          ->campo('Fecha', $d['fecha'] ?? date('Y-m-d H:i'))
+          ->subtitulo('Student Information')
+          ->campo('Name', trim(($d['nombre'] ?? '') . ' ' . ($d['apellido'] ?? '')))
+          ->campo('Email', $d['correo'] ?? '')
+          ->campo('Major', $d['carrera'] ?? '')
+          ->campo('Academic Term', $d['periodo'] ?? '')
+          ->campo('Date', $d['fecha'] ?? date('Y-m-d H:i'))
           ->separador()
           ->subtitulo('Feedback')
           ->parrafo($d['justificacion'] ?? '')
@@ -170,28 +170,28 @@ class Pdf
           ->subtitulo('Transcript')
           ->parrafo($d['transcripcion'] ?? '')
           ->separador()
-          ->parrafo('Nota: esta constancia no incluye calificacion. El resultado se entrega al instructor.');
+          ->parrafo('Note: this certificate does not include a grade. The result is provided to the instructor.');
         return $p->build();
     }
 
     public static function evaluacionProfesor(array $d): string
     {
         $p = new self();
-        $p->titulo('Mi@Tech - Evaluacion (Instructor)')
-          ->parrafo('Instituto Tecnologico Superior Japon - Centro de Idiomas')
+        $p->titulo('Mi@Tech - Evaluation (Instructor)')
+          ->parrafo('Instituto Tecnologico Superior Japon - Language Center')
           ->separador()
-          ->subtitulo('Datos del estudiante')
-          ->campo('Nombre', trim(($d['nombre'] ?? '') . ' ' . ($d['apellido'] ?? '')))
-          ->campo('Correo', $d['correo'] ?? '')
-          ->campo('Carrera', $d['carrera'] ?? '')
-          ->campo('Periodo', $d['periodo'] ?? '')
-          ->campo('Fecha', $d['fecha'] ?? date('Y-m-d H:i'))
+          ->subtitulo('Student Information')
+          ->campo('Name', trim(($d['nombre'] ?? '') . ' ' . ($d['apellido'] ?? '')))
+          ->campo('Email', $d['correo'] ?? '')
+          ->campo('Major', $d['carrera'] ?? '')
+          ->campo('Academic Term', $d['periodo'] ?? '')
+          ->campo('Date', $d['fecha'] ?? date('Y-m-d H:i'))
           ->separador()
-          ->subtitulo('Resultado CEFR')
-          ->campo('Nivel', $d['nivel_cefr'] ?? '')
-          ->campo('Confianza', $d['confianza'] ?? '')
+          ->subtitulo('CEFR Result')
+          ->campo('Level', $d['nivel_cefr'] ?? '')
+          ->campo('Confidence', $d['confianza'] ?? '')
           ->separador()
-          ->subtitulo('Justificacion')
+          ->subtitulo('Justification')
           ->parrafo($d['justificacion'] ?? '')
           ->separador()
           ->subtitulo('Transcript')

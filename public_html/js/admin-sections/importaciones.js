@@ -164,16 +164,16 @@ class ImportacionesFrontend {
             }
 
             .importacion-row {
-                transition: background-color 0.2s;
+                transition: background-color 2.2s;
             }
 
             .importacion-row:hover {
-                background-color: #f0f0f0;
+                background-color: #575454;
             }
 
             .importaciones-resumen {
                 padding: 1.5rem;
-                background: #f9f9f9;
+                background: #615e5e;
                 border-radius: 8px;
             }
 

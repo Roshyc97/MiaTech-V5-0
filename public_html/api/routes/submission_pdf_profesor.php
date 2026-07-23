@@ -24,7 +24,7 @@ try {
     Response::error('No se pudo leer el reporte: ' . $e->getMessage(), 404);
 }
 header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="evaluacion_' . $usuario . '_PROFESOR.pdf"');
+header('Content-Disposition: attachment; filename="' . $usuario . '_evaluacion.pdf"');
 header('Content-Length: ' . strlen($bytes));
 echo $bytes;
 exit;

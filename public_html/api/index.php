@@ -21,7 +21,7 @@ if ($metodo === 'GET' && preg_match('#^submission/pdf/([^/]+)/profesor$#', $ruta
 
 $rutas = [
     'GET health'                => 'health.php',
-    'GET config'                => 'config.php',
+    'GET ajustes'               => 'config.php',
     'GET imagen/aleatoria'      => 'imagen.php',
     'POST consentimiento'       => 'consentimiento.php',
     'POST submission'           => 'submission.php',

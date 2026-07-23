@@ -40,25 +40,40 @@ class Mailer
             return $read();
         };
 
+        // EHLO debe anunciar un nombre valido; Office365 rechaza nombres no-FQDN.
+        $ehlo = 'EHLO ' . ($cfg['ehlo'] ?? 'miatech.local');
+
         $read();
-        $cmd('EHLO miatech');
+        $cmd($ehlo);
         if (!$ssl) {
-            $cmd('STARTTLS');
+            $rTls = $cmd('STARTTLS');
+            if (strpos($rTls, '220') === false) {
+                fclose($fp);
+                return ['ok' => false, 'error' => 'STARTTLS rechazado: ' . trim($rTls)];
+            }
             if (!stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
                 fclose($fp);
-                return ['ok' => false, 'error' => 'STARTTLS fallido'];
+                return ['ok' => false, 'error' => 'STARTTLS: negociacion TLS fallida'];
             }
-            $cmd('EHLO miatech');
+            $cmd($ehlo);
         }
         $cmd('AUTH LOGIN');
         $cmd(base64_encode($user));
         $r = $cmd(base64_encode($pass));
         if (strpos($r, '235') === false) {
             fclose($fp);
-            return ['ok' => false, 'error' => 'autenticacion SMTP fallida'];
+            return ['ok' => false, 'error' => 'autenticacion SMTP fallida: ' . trim($r)];
         }
-        $cmd("MAIL FROM:<$from>");
-        $cmd("RCPT TO:<$para>");
+        $rFrom = $cmd("MAIL FROM:<$from>");
+        if (strpos($rFrom, '250') === false) {
+            fclose($fp);
+            return ['ok' => false, 'error' => 'MAIL FROM rechazado: ' . trim($rFrom)];
+        }
+        $rRcpt = $cmd("RCPT TO:<$para>");
+        if (strpos($rRcpt, '250') === false) {
+            fclose($fp);
+            return ['ok' => false, 'error' => 'RCPT TO rechazado: ' . trim($rRcpt)];
+        }
         $cmd('DATA');
         $headers  = "From: $fromName <$from>\r\n";
         $headers .= "To: <$para>\r\n";
@@ -68,6 +83,6 @@ class Mailer
         $r = $cmd($headers . $htmlCuerpo . "\r\n.");
         $cmd('QUIT');
         fclose($fp);
-        return ['ok' => (strpos($r, '250') !== false)];
+        return ['ok' => (strpos($r, '250') !== false), 'error' => (strpos($r, '250') !== false ? null : 'envio rechazado: ' . trim($r))];
     }
 }

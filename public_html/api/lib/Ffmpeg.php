@@ -4,13 +4,18 @@ namespace MiaTech;
 /** Extraccion de audio del video con ffmpeg (confirmado disponible en SiteGround, Fase 0). */
 class Ffmpeg
 {
-    /** Extrae el audio a mp3 y devuelve la ruta del audio. */
+    /**
+     * Extrae el audio del video y devuelve la ruta del audio.
+     * Usa WAV PCM 16-bit, 16kHz mono: el encoder pcm_s16le es parte del nucleo
+     * de ffmpeg (nunca falta, a diferencia de libmp3lame que no esta compilado
+     * en SiteGround) y 16kHz mono es el formato recomendado por GROQ/Whisper.
+     */
     public static function extraerAudio(string $rutaVideo): string
     {
         $bin = \config('ffmpeg.bin');
-        $rutaAudio = preg_replace('/\.[^.]*$/', '', $rutaVideo) . '_audio.mp3';
+        $rutaAudio = preg_replace('/\.[^.]*$/', '', $rutaVideo) . '_audio.wav';
         $cmd = sprintf(
-            '%s -y -i %s -vn -c:a libmp3lame -b:a 64k %s 2>&1',
+            '%s -y -i %s -vn -ac 1 -ar 16000 -c:a pcm_s16le %s 2>&1',
             escapeshellarg($bin),
             escapeshellarg($rutaVideo),
             escapeshellarg($rutaAudio)

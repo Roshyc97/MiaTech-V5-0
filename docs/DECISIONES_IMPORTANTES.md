@@ -57,7 +57,7 @@
 ## 5. Flujo de envío (grabación -> nivel CEFR)
 
 ```
-video (webm, screen+camara+audio) -> Ffmpeg::extraerAudio() (exec, extrae a webm/opus)
+video (webm, screen+camara+audio) -> Ffmpeg::extraerAudio() (exec, extrae a WAV PCM 16kHz mono)
   -> Groq::transcribir() (Whisper, GROQ, cURL)
   -> Groq::evaluar() (LLM, GROQ, cURL, exige JSON estricto con nivel_cefr/confianza/justificacion)
   -> Pdf::evaluacionProfesor() (con nota) -> storage
@@ -82,6 +82,16 @@ video (webm, screen+camara+audio) -> Ffmpeg::extraerAudio() (exec, extrae a webm
   el `PATH`, `submission.php` falla con 500 y el mensaje literal del sistema operativo
   ("no se reconoce como un comando..."). Solución: instalar ffmpeg y/o apuntar `FFMPEG_BIN` a
   la ruta absoluta del ejecutable.
+
+- **Formato de audio: WAV PCM, no MP3 (decisión 2026-07-21):** el audio se extrae a
+  **WAV `pcm_s16le`, 16 kHz, mono** (`-vn -ac 1 -ar 16000 -c:a pcm_s16le`), no a MP3.
+  - **Razón:** el FFmpeg de SiteGround (v8.1.1) **no tiene compilado `libmp3lame`**, por lo que
+    la salida `.mp3` fallaba con `Error selecting an encoder ... Encoder not found` (500 en
+    `POST /api/submission`). El encoder `pcm_s16le` es parte del núcleo de FFmpeg y nunca falta.
+  - **Ventaja:** 16 kHz mono es el formato recomendado por GROQ/Whisper; los archivos pesan
+    ~10 MB máx para 5 min, por debajo del límite de 25 MB de la API.
+  - **Impacto asociado:** `lib/Groq.php` envía el `CURLFile` con MIME `audio/wav` (antes
+    `audio/webm`). Ver `REGISTRO_CAMBIOS_SESION.md` (C3) para el detalle del cambio.
 
 ---
 
@@ -126,9 +136,34 @@ video (webm, screen+camara+audio) -> Ffmpeg::extraerAudio() (exec, extrae a webm
 
 - **Decisión:** `lib/Mailer.php` implementa SMTP mínimo por `fsockopen` + `AUTH LOGIN` (soporta
   465/SSL directo y 587/STARTTLS), sin PHPMailer ni Composer.
-- Cuenta institucional prevista: `speakingtest@itsjapon.edu.ec`. Aún sin probar contra servidor
-  real (ver `DUDAS_PENDIENTES.md` D-07).
+- Cuenta institucional prevista: `speakingtest@itsjapon.edu.ec`.
 - Uso: confirmación de envío al alumno (sin nota) y recuperación de contraseña de roles.
+- **Toda la config SMTP vive en `.env`** (`SMTP_HOST/PORT/USER/PASSWORD/FROM/FROM_NAME`), leída por
+  `config('smtp')`; nada hardcodeado. El `Mailer` elige SSL (465) o STARTTLS (587) según el puerto,
+  por lo que cambiar de proveedor es SOLO editar `.env`, sin tocar código.
+- **Estado (2026-07-23):** SMTP probado y funcional en SiteGround con Gmail personal (STARTTLS/587,
+  app password). El correo institucional Office 365 requiere que TI habilite **SMTP AUTH** en el
+  buzón (bloqueado por defecto: `535 SmtpClientAuthentication is disabled`). Uso de Gmail es
+  temporal hasta esa habilitación — ver `DUDAS_PENDIENTES.md` D-07 y D-10.
+- **Plantillas HTML** de correo separadas en `lib/EmailTemplates.php` (`confirmacionAlumno`,
+  `recuperacionAdmin`): para cambiar formato/contenido de un correo se edita únicamente ese archivo.
+
+---
+
+## 14. Recuperación de contraseña de roles: contraseña temporal (2026-07-23)
+
+- **Decisión del usuario:** la recuperación de contraseña de administradores usa una
+  **contraseña temporal** enviada por correo (no el flujo de enlace con token, que también existe
+  en `recuperar.html` pero deja `must_change_password = 0`).
+- **Flujo:** `admin-login` → enlace "Forgot your password?" → pide correo → `routes/auth/forgot.php`
+  genera una clave temporal de 10 chars, guarda su **hash bcrypt en `reset_token`** con
+  `reset_expira = ahora + 1h`, y la envía por correo. La contraseña actual **no se altera**.
+- Al iniciar sesión con la temporal (`routes/auth/login.php`, rama 1.b): si no ha caducado, se
+  convierte en la contraseña actual, se pone `must_change_password = 1` (estado **"Pending"** en
+  el dashboard) y se consume (single-use). El sistema obliga a crear una nueva contraseña.
+- **Sin cambios** en `change-password.php` ni en el esquema (se reutilizan `reset_token`/`reset_expira`).
+- **Riesgo aceptado:** la clave temporal viaja en texto en el correo; mitigado con caducidad de 1h,
+  un solo uso y cambio obligatorio — ver `DUDAS_PENDIENTES.md` D-09.
 
 ---
 

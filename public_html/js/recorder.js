@@ -4,7 +4,7 @@
 //              → Consentimiento → Grabación → Envío → Confirmación
 //
 // NOTA: Toda la configuración variable viene de .env
-// y se carga desde /api/config
+// y se carga desde /api/ajustes
 // ============================================
 
 'use strict';
@@ -25,11 +25,11 @@ let CONFIG = {
 // Cargar configuración desde servidor (variables de .env)
 async function cargarConfiguracion() {
     try {
-        const res = await fetch('/api/config');
+        const res = await fetch('/api/ajustes');
         if (res.ok) {
             const data = await res.json();
             CONFIG = { ...CONFIG, ...data };
-            console.log('✅ CConfiguration loaded from .env:', CONFIG);
+            console.log('✅ Configuration loaded from .env:', CONFIG);
         }
     } catch (err) {
         console.warn('⚠️ Using default settings:', err.message);
@@ -116,6 +116,21 @@ function mostrarError(titulo, mensaje) {
 // SECCIÓN 1 — HOME
 // ============================================
 function initHome() {
+    // Precargar el GIF animado y el audio de saludo al abrir la pagina,
+    // asi ya estan en cache y la animacion arranca inmediata al hacer clic
+    // (evita el retraso de descarga de la primera reproduccion).
+    const avatarPre = $('miatech-gif');
+    if (avatarPre) {
+        const gifUrl = avatarPre.getAttribute('data-animated') || 'img/MiaTechv.gif';
+        const pre = new Image();
+        pre.src = gifUrl;
+    }
+    try {
+        const audioPre = new Audio('audio/Saludo.mp3');
+        audioPre.preload = 'auto';
+        audioPre.load();
+    } catch (e) { /* no critico */ }
+
     const btn = $('btn-begin-assessment');
     if (btn) {
         btn.onclick = () => {

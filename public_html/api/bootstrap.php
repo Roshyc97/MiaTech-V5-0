@@ -4,7 +4,7 @@
  */
 declare(strict_types=1);
 
-$GLOBALS['config'] = require __DIR__ . '/config.php';
+$GLOBALS['config'] = require __DIR__ . '/settings.php';
 
 if (!empty($GLOBALS['config']['app']['debug'])) {
     error_reporting(E_ALL);

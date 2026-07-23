@@ -1,0 +1,265 @@
+================================================================================
+                         GUÍA RÁPIDA - DESPLIEGUE
+                     MiaTech v5 LOCAL → SITEGROUND
+================================================================================
+
+TIEMPO ESTIMADO: 1-2 horas (primer despliegue)
+
+================================================================================
+                           5 FASES SIMPLES
+================================================================================
+
+FASE 0: PREPARACIÓN EN SITEGROUND (15 min)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 1. Crear BD MySQL en Site Tools                                          │
+│    - Nombre: miatech                                                     │
+│    - Usuario: miatech_user                                               │
+│    - Anotar: HOST, BD, USUARIO, CONTRASEÑA                               │
+│                                                                          │
+│ 2. Crear carpeta storage y permisos                                      │
+│    mkdir -p /home/customer/www/institutoj20.sg-host.com/storage/tmp      │
+│    chmod 755 /home/customer/www/institutoj20.sg-host.com/storage        │
+│                                                                          │
+│ 3. Anotar credenciales SMTP                                              │
+│    SMTP_HOST, SMTP_PORT, SMTP_PASSWORD                                   │
+│                                                                          │
+│ 4. Verificar SSL (debe mostrar 🔒)                                        │
+│    https://institutoj20.sg-host.com/                                    │
+└──────────────────────────────────────────────────────────────────────────┘
+
+FASE 1: EDITAR .env.production (15 min)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 1. Abrir: deploy/siteground/.env.production                              │
+│                                                                          │
+│ 2. Reemplazar TODOS XXXX_..._XXXX con valores reales:                    │
+│    - DB_HOST, DB_NAME, DB_USER, DB_PASSWORD (de SiteGround)              │
+│    - GROQ_API_KEY (de GROQ console, plan pago)                           │
+│    - SMTP_HOST, SMTP_PORT, SMTP_PASSWORD (de email)                      │
+│    - STORAGE_LOCAL_PATH = /home/customer/www/institutoj20.sg-host.com   │
+│                                                                          │
+│ 3. Guardar (no subir todavía)                                            │
+│                                                                          │
+│ VARIABLES CRÍTICAS:                                                      │
+│   APP_ENV=production                                                     │
+│   APP_DEBUG=false                                                        │
+│   DB_DRIVER=mysql (NO sqlite)                                            │
+│   GROQ_API_KEY=gsk_... (NO vacío)                                        │
+│   SMTP_HOST=... (NO vacío)                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+FASE 2: SUBIR ARCHIVOS A SITEGROUND (30 min)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Opción A: SFTP (Filezilla, WinSCP, etc.)                                 │
+│   Host: institutoj20.sg-host.com:18765                                  │
+│                                                                          │
+│   Orden de subida:                                                       │
+│   1. public_html/*     → /public_html/                                   │
+│   2. tools/            → /tools/                                         │
+│   3. docs/             → /docs/ (opcional)                               │
+│   4. storage/          → /storage/ (crear vacío)                         │
+│                                                                          │
+│ Opción B: Por SSH + Git                                                  │
+│   git clone ... && git pull origin main                                  │
+│                                                                          │
+│ Opción C: ZIP + File Manager de SiteGround                               │
+│   Crear ZIP, subir, descomprimir                                         │
+│                                                                          │
+│ ⚠️ NO SUBIR:                                                             │
+│   .env (LOCAL)                                                           │
+│   .env.local                                                             │
+│   db/miatech.sqlite                                                      │
+│   deploy/ carpeta                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+FASE 3: CREAR .env EN SITEGROUND (10 min)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 1. Por SFTP: Crear archivo ".env"                                        │
+│    Ubicación: /home/customer/www/institutoj20.sg-host.com/.env           │
+│    Contenido: Copiar .env.production (EDITADO)                           │
+│                                                                          │
+│ 2. O por SSH:                                                            │
+│    cat > /home/customer/www/institutoj20.sg-host.com/.env << 'EOF'       │
+│    [pegar contenido de .env.production editado]                          │
+│    EOF                                                                   │
+│    chmod 600 /home/customer/www/institutoj20.sg-host.com/.env            │
+│                                                                          │
+│ ✅ Verificar: ls -la .env → debe mostrar -rw------- (permisos 600)       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+FASE 4: MIGRACIÓN DE BASE DE DATOS (15 min)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Por SSH (recomendado):                                                   │
+│   cd /home/customer/www/institutoj20.sg-host.com                         │
+│   php tools/migrate.php --seed                                           │
+│   (--seed crea datos de prueba; sin --seed solo esquema)                 │
+│                                                                          │
+│ O por Cron:                                                              │
+│   SiteGround → Cron Jobs → Agregar                                       │
+│   /opt/php82/bin/php .../tools/migrate.php --seed                        │
+│                                                                          │
+│ ✅ Verificar:                                                            │
+│   curl https://institutoj20.sg-host.com/api/health                       │
+│   Debe mostrar: "bd": { "ok": true, "driver": "mysql" }                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+FASE 5: VERIFICACIÓN POST-DESPLIEGUE (15 min)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ✅ Health check:                                                         │
+│    curl https://institutoj20.sg-host.com/api/health                      │
+│    → ok: true, bd.driver: mysql, ffmpeg.disponible: true                 │
+│                                                                          │
+│ ✅ Login de rol:                                                         │
+│    POST /api/auth/login (admin.ti@... / admin1234)                       │
+│    → ok: true, usuario con datos                                         │
+│                                                                          │
+│ ✅ Login de alumno:                                                      │
+│    POST /api/auth/login (cavasconezp@... / 1712345678)                   │
+│    → ok: true, usuario con datos                                         │
+│                                                                          │
+│ ✅ Frontend carga:                                                       │
+│    https://institutoj20.sg-host.com/ → Sin errores 404/500               │
+│                                                                          │
+│ ✅ Dashboard funciona:                                                   │
+│    https://institutoj20.sg-host.com/admin-dashboard.html                │
+│    → Login y ver estadísticas                                            │
+│                                                                          │
+│ ✅ GROQ funciona (opcional):                                             │
+│    Grabar video, submit → Devuelve resultado CEFR                        │
+│                                                                          │
+│ ✅ SMTP funciona (opcional):                                             │
+│    /api/auth/forgot → Llega correo de recuperación                       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                          CHECKLIST DE ERRORES
+================================================================================
+
+❌ /api/health devuelve 500
+   → Activar APP_DEBUG=true temporalmente en .env
+   → Ver logs: tail -f /home/customer/logs/.../error.log
+
+❌ /api/health devuelve bd.ok: false
+   → Verificar DB_HOST, DB_NAME, DB_USER, DB_PASSWORD en .env
+   → Probar conexión manual: mysql -h localhost -u usuario -p
+
+❌ Login devuelve 401
+   → Verificar que executaste: php tools/migrate.php --seed
+   → Verificar que usuarios de prueba existen en BD
+
+❌ Archivo .env no existe
+   → Crear manualmente en SiteGround (ruta absoluta)
+   → Verificar permisos: chmod 600 .env
+
+❌ GROQ no funciona
+   → Verificar GROQ_API_KEY en .env (debe empezar con gsk_)
+   → Verificar que es plan de PAGO (free tier tiene límites)
+
+❌ Correos no llegan
+   → Verificar SMTP_HOST, SMTP_PORT, SMTP_PASSWORD en .env
+   → Ver logs: tail -f /home/customer/logs/.../error.log
+   → Revisar carpeta spam del correo
+
+================================================================================
+                         COMANDOS ÚTILES
+================================================================================
+
+# Conectar SSH a SiteGround:
+ssh usuario@institutoj20.sg-host.com -p 18765
+
+# Verificar que .env existe:
+ls -la /home/customer/www/institutoj20.sg-host.com/.env
+
+# Ver contenido de .env:
+cat /home/customer/www/institutoj20.sg-host.com/.env
+
+# Verificar directorios creados:
+ls -la /home/customer/www/institutoj20.sg-host.com/
+
+# Probar conexión MySQL:
+mysql -h localhost -u miatech_user -p
+USE miatech_bd;
+SHOW TABLES;
+SELECT COUNT(*) FROM administradores;
+
+# Ver logs de PHP:
+tail -f /home/customer/logs/institutoj20.sg-host.com/error.log
+
+# Limpiar storage temporal:
+find /home/customer/www/institutoj20.sg-host.com/storage/tmp -type f -mmin +120 -delete
+
+# Ejecutar migración manual:
+cd /home/customer/www/institutoj20.sg-host.com
+php tools/migrate.php --seed
+
+# Verificar permisos de archivo:
+stat /home/customer/www/institutoj20.sg-host.com/.env
+
+================================================================================
+                        ARCHIVOS EN ESTA CARPETA
+================================================================================
+
+README.md                    → Guía COMPLETA (7 fases detalladas)
+PRE_DEPLOY_CHECKLIST.md      → Verificaciones ANTES de subir
+POST_DEPLOY_CHECKLIST.md     → Verificaciones DESPUÉS de subir
+ARCHIVO_A_COPIAR.md          → Qué copiar exactamente por SFTP
+.env.production              → Plantilla de variables (EDITAR ANTES)
+ESTRUCTURA_SITEGROUND.txt    → Mapa visual del layout en SiteGround
+GUIA_RAPIDA.txt              → Este archivo (resumen 5 fases)
+
+LEER EN ESTE ORDEN:
+1. GUIA_RAPIDA.txt           (tú estás aquí)
+2. PRE_DEPLOY_CHECKLIST.md   (antes de subir)
+3. ARCHIVO_A_COPIAR.md       (durante subida)
+4. README.md                 (pasos detallados)
+5. POST_DEPLOY_CHECKLIST.md  (después de subir)
+
+================================================================================
+                           FLUJO DE TRABAJO
+================================================================================
+
+Día 1: PREPARACIÓN
+  [ ] Fase 0: Preparar SiteGround (BD, SMTP, SSL)
+  [ ] Leer PRE_DEPLOY_CHECKLIST.md completamente
+  [ ] Editar .env.production (Fase 1)
+  [ ] Completar PRE_DEPLOY_CHECKLIST.md (verificaciones)
+
+Día 2: DESPLIEGUE
+  [ ] Fase 2: Subir archivos a SiteGround (SFTP)
+  [ ] Fase 3: Crear .env en SiteGround
+  [ ] Fase 4: Ejecutar migración BD
+  [ ] Leer POST_DEPLOY_CHECKLIST.md completamente
+  [ ] Completar POST_DEPLOY_CHECKLIST.md (verificaciones)
+
+Día 3: PRODUCCIÓN
+  [ ] Limpiar datos de prueba (si no los necesitas)
+  [ ] Crear usuarios reales (admin)
+  [ ] Configurar Cron de limpieza (storage/tmp)
+  [ ] Monitorear logs iniciales
+  [ ] Comunicar a usuarios finales
+
+================================================================================
+                          RESUMEN EN 1 LÍNEA
+================================================================================
+
+Subir public_html/+tools/ → Editar .env.production con secretos reales
+→ Crear .env en SiteGround → php tools/migrate.php --seed
+→ Probar /api/health, login, grabación → ¡Listo!
+
+================================================================================
+                         SOPORTE / CONTACTO
+================================================================================
+
+Si algo no funciona:
+
+1. Leer POST_DEPLOY_CHECKLIST.md (sección "Si algo falló")
+2. Verificar logs: tail -f /home/customer/logs/.../error.log
+3. Ejecutar health check: curl https://institutoj20.sg-host.com/api/health
+4. Revisar .env: ¿Todos los XXXX fueron reemplazados?
+5. Contactar a soporte de SiteGround si problema es infraestructura
+
+================================================================================
+
+Última actualización: 2026-07-20
+Próxima revisión: Tras primer despliegue exitoso
+
+================================================================================

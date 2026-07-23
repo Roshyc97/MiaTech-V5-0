@@ -31,7 +31,7 @@ PROMPT;
         }
         $url = rtrim(\config('groq.base_url'), '/') . '/audio/transcriptions';
         $post = [
-            'file'            => new \CURLFile($rutaAudio, 'audio/webm', basename($rutaAudio)),
+            'file'            => new \CURLFile($rutaAudio, 'audio/wav', basename($rutaAudio)),
             'model'           => \config('groq.whisper_model'),
             'language'        => 'en',
             'response_format' => 'text',

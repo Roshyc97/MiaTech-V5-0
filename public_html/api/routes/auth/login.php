@@ -15,7 +15,7 @@ MiaTech\RateLimit::comprobar("login", 5, 300);
 
 // 1) Administradores (roles): bcrypt
 $admin = Database::get(
-    'SELECT id, correo, nombre, password_hash, rol, activo, must_change_password
+    'SELECT id, correo, nombre, password_hash, rol, activo, must_change_password, reset_token, reset_expira
      FROM administradores WHERE correo = ?',
     [$correo]
 );
@@ -23,15 +23,39 @@ if ($admin) {
     if ((int) $admin['activo'] !== 1) {
         Response::error('Cuenta deshabilitada', 403);
     }
-    if (!password_verify($password, $admin['password_hash'])) {
-        Response::error('Credenciales incorrectas', 401);
+
+    // 1.a) Contrasena normal
+    if (password_verify($password, $admin['password_hash'])) {
+        $mcp = ((int) $admin['must_change_password'] === 1);
+        Auth::login([
+            'id' => (int) $admin['id'], 'correo' => $admin['correo'], 'nombre' => $admin['nombre'],
+            'rol' => $admin['rol'], 'tipo' => 'admin', 'must_change_password' => $mcp,
+        ]);
+        Response::ok(['tipo' => 'admin', 'rol' => $admin['rol'], 'nombre' => $admin['nombre'], 'must_change_password' => $mcp]);
     }
-    $mcp = ((int) $admin['must_change_password'] === 1);
-    Auth::login([
-        'id' => (int) $admin['id'], 'correo' => $admin['correo'], 'nombre' => $admin['nombre'],
-        'rol' => $admin['rol'], 'tipo' => 'admin', 'must_change_password' => $mcp,
-    ]);
-    Response::ok(['tipo' => 'admin', 'rol' => $admin['rol'], 'nombre' => $admin['nombre'], 'must_change_password' => $mcp]);
+
+    // 1.b) Contrasena temporal (recuperacion): valida si no ha caducado.
+    // Al usarla, se convierte en la contrasena actual y se fuerza el cambio
+    // (must_change_password = 1 -> "Pending"). Se consume (single-use).
+    if (!empty($admin['reset_token'])
+        && !empty($admin['reset_expira'])
+        && strtotime($admin['reset_expira']) >= time()
+        && password_verify($password, $admin['reset_token'])
+    ) {
+        Database::run(
+            'UPDATE administradores
+             SET password_hash = ?, must_change_password = 1, reset_token = NULL, reset_expira = NULL
+             WHERE id = ?',
+            [$admin['reset_token'], $admin['id']]
+        );
+        Auth::login([
+            'id' => (int) $admin['id'], 'correo' => $admin['correo'], 'nombre' => $admin['nombre'],
+            'rol' => $admin['rol'], 'tipo' => 'admin', 'must_change_password' => true,
+        ]);
+        Response::ok(['tipo' => 'admin', 'rol' => $admin['rol'], 'nombre' => $admin['nombre'], 'must_change_password' => true]);
+    }
+
+    Response::error('Credenciales incorrectas', 401);
 }
 
 // 2) Estudiantes: clave = cedula (texto plano)

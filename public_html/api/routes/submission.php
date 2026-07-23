@@ -14,6 +14,7 @@ use MiaTech\Ffmpeg;
 use MiaTech\Groq;
 use MiaTech\Pdf;
 use MiaTech\Mailer;
+use MiaTech\EmailTemplates;
 use MiaTech\Storage\StorageFactory;
 
 $u = Auth::requireAuth();
@@ -81,11 +82,11 @@ try {
     $pdfAlumBytes = Pdf::constanciaAlumno($datos);
 
     // Almacenar SOLO PDF profesor
-    $tmpPdf = $tmpDir . '/' . $usuario . '_profesor.pdf';
+    $tmpPdf = $tmpDir . '/' . $usuario . '_evaluacion.pdf';
     file_put_contents($tmpPdf, $pdfProfBytes);
 
     $videoKey = "$periodoNombre/videos/$usuario.webm";
-    $pdfKey   = "$periodoNombre/pdf/{$usuario}_profesor.pdf";
+    $pdfKey   = "$periodoNombre/pdf/{$usuario}_evaluacion.pdf";
     $storage->guardar($videoKey, $tmpVideo);
     $storage->guardar($pdfKey, $tmpPdf);
     @unlink($tmpPdf);
@@ -133,13 +134,17 @@ try {
     }
 
     // 7) Correo de confirmacion al alumno (best-effort, sin calificacion)
+    // Plantilla HTML vive en lib/EmailTemplates.php — para cambios de formato
+    // o contenido del correo, editar UNICAMENTE ese archivo.
     $nombreCompleto = trim(($est['nombre'] ?? '') . ' ' . ($est['apellido'] ?? ''));
     Mailer::enviar(
         $u['correo'],
-        'Confirmacion de evaluacion - MiaTech',
-        '<p>Hola ' . htmlspecialchars($nombreCompleto) . ',</p>'
-        . '<p>Tu evaluacion oral fue recibida y procesada correctamente. '
-        . 'El resultado se ha enviado a tu instructor. Gracias por participar.</p>'
+        'Confirmacion de envio - Speaking Test | Centro de Idiomas ITS Japon',
+        EmailTemplates::confirmacionAlumno([
+            'nombre'  => $nombreCompleto,
+            'fecha'   => $datos['fecha'],
+            'periodo' => $periodoNombre,
+        ])
     );
 
     // 8) Almacenar PDF alumno en sesión (para descarga inmediata SOLO)
